@@ -44,8 +44,12 @@ function App() {
         />
       ) : null}
 
-      {step === 'playing' ? (
-        <GameScreen config={config} onFinishRound={() => setStep('result')} />
+      {step === 'playing' && round ? (
+        <GameScreen
+          config={config}
+          round={round}
+          onFinishRound={() => setStep('result')}
+        />
       ) : null}
 
       {step === 'result' && round ? (

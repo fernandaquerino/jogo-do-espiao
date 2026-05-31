@@ -12,13 +12,14 @@ export function ResultScreen({
   onNewConfig,
 }: ResultScreenProps) {
   const spies = round.players.filter((player) => player.role === 'spy')
+  const hintText = round.location.hint || 'Dica não cadastrada'
 
   return (
     <main className="screen result-screen">
       <section className="panel">
         <p className="eyebrow">Resultado</p>
         <h1>{round.location.name}</h1>
-        <p className="lede">Dica usada: {round.location.hint}</p>
+        <p className="lede">Dica usada: {hintText}</p>
       </section>
 
       <section className="panel">

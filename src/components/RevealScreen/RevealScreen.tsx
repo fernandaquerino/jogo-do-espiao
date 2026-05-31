@@ -17,6 +17,7 @@ export function RevealScreen({
   const [isRevealComplete, setIsRevealComplete] = useState(false)
   const currentPlayer = round.players[currentPlayerIndex]
   const isLastPlayer = currentPlayerIndex === round.players.length - 1
+  const hintText = round.location.hint || 'Dica ainda não cadastrada'
 
   function hideAndContinue() {
     setIsRevealed(false)
@@ -48,7 +49,7 @@ export function RevealScreen({
               <>
                 <p className="role-title">Você é o espião</p>
                 {config.spyGetsHint ? (
-                  <p className="role-detail">Dica: {round.location.hint}</p>
+                  <p className="role-detail">Dica: {hintText}</p>
                 ) : null}
               </>
             ) : (

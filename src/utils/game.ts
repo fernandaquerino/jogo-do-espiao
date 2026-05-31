@@ -49,7 +49,10 @@ export function getAvailableLocations(config: GameConfig): Location[] {
 export function createRound(config: GameConfig): GameRound {
   const locations = getAvailableLocations(config)
   const location = locations[Math.floor(Math.random() * locations.length)]
-  const spyIds = new Set(shuffle(Array.from({ length: config.playersCount }, (_, index) => index + 1)).slice(0, config.spiesCount))
+  const playerIds = Array.from({ length: config.playersCount }, (_, index) => index + 1)
+  const shuffledPlayerIds = shuffle(playerIds)
+  const spyIds = new Set(shuffledPlayerIds.slice(0, config.spiesCount))
+  const firstAskerId = shuffledPlayerIds[config.spiesCount] ?? shuffledPlayerIds[0]
   const playerNames = buildPlayerNames(config.playersCount, config.playerNames)
 
   const players: Player[] = playerNames.map((name, index) => ({
@@ -58,7 +61,7 @@ export function createRound(config: GameConfig): GameRound {
     role: spyIds.has(index + 1) ? 'spy' : 'player',
   }))
 
-  return { location, players }
+  return { location, players, firstAskerId }
 }
 
 export function loadSavedConfig(): GameConfig {

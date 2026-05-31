@@ -25,4 +25,5 @@ export type GameStep = 'setup' | 'reveal' | 'playing' | 'result'
 export type GameRound = {
   location: Location
   players: Player[]
+  firstAskerId: number
 }
