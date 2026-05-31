@@ -19,6 +19,9 @@ export function SetupScreen({
     name: '',
     hint: '',
   })
+  const [playersCountInput, setPlayersCountInput] = useState(
+    String(config.playersCount),
+  )
   const error = validateConfig(config)
   const locationsCount = useMemo(
     () => getAvailableLocations(config).length,
@@ -29,8 +32,12 @@ export function SetupScreen({
     onConfigChange({ ...config, ...nextConfig })
   }
 
+  function getSafePlayersCount(playersCount: number) {
+    return Math.min(20, Math.max(3, playersCount))
+  }
+
   function updatePlayersCount(playersCount: number) {
-    const safePlayersCount = Math.min(20, Math.max(3, playersCount))
+    const safePlayersCount = getSafePlayersCount(playersCount)
     const playerNames = Array.from({ length: safePlayersCount }, (_, index) => {
       return config.playerNames[index] || `Jogador ${index + 1}`
     })
@@ -40,6 +47,37 @@ export function SetupScreen({
       spiesCount: Math.min(config.spiesCount, safePlayersCount - 1),
       playerNames,
     })
+  }
+
+  function handlePlayersCountChange(value: string) {
+    setPlayersCountInput(value)
+
+    if (!value) {
+      return
+    }
+
+    const playersCount = Number(value)
+
+    if (
+      Number.isInteger(playersCount) &&
+      playersCount >= 3 &&
+      playersCount <= 20
+    ) {
+      updatePlayersCount(playersCount)
+    }
+  }
+
+  function commitPlayersCountInput() {
+    const playersCount = Number(playersCountInput)
+
+    if (!Number.isInteger(playersCount)) {
+      setPlayersCountInput(String(config.playersCount))
+      return
+    }
+
+    const safePlayersCount = getSafePlayersCount(playersCount)
+    setPlayersCountInput(String(safePlayersCount))
+    updatePlayersCount(safePlayersCount)
   }
 
   function updatePlayerName(index: number, name: string) {
@@ -97,8 +135,9 @@ export function SetupScreen({
               type="number"
               min="3"
               max="20"
-              value={config.playersCount}
-              onChange={(event) => updatePlayersCount(Number(event.target.value))}
+              value={playersCountInput}
+              onBlur={commitPlayersCountInput}
+              onChange={(event) => handlePlayersCountChange(event.target.value)}
             />
           </label>
 
