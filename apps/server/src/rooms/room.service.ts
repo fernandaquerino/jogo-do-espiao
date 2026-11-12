@@ -5,9 +5,16 @@ import {
   MAX_NICKNAME_LENGTH,
   MAX_PLAYERS,
   MIN_PLAYERS,
+  createRound,
   validateSettings,
 } from '@espiao/game-core'
-import type { PublicPlayer, RoomStatePayload, RoundSettings } from '@espiao/game-core'
+import type {
+  PublicPlayer,
+  RoomStatePayload,
+  RoundEndedPayload,
+  RoundRolePayload,
+  RoundSettings,
+} from '@espiao/game-core'
 import { RoomError } from './room.errors.ts'
 import { generateRoomCode, generateSessionToken, normalizeRoomCode } from './room-code.ts'
 import { ROOM_STORE } from './room-store.ts'
@@ -17,6 +24,8 @@ import type { PlayerRecord, Room } from './room.types.ts'
 /** Notifications the transport layer turns into socket messages. */
 export type RoomEvent =
   | { type: 'state'; roomCode: string }
+  | { type: 'roundStarted'; roomCode: string }
+  | { type: 'roundEnded'; roomCode: string }
   | { type: 'removed'; roomCode: string; playerId: string; reason: 'kicked' | 'left' }
 
 export type RoomEventListener = (event: RoomEvent) => void
@@ -53,6 +62,7 @@ function cleanNickname(input: string): string {
 export class RoomService {
   private readonly store: RoomStore
   private readonly listeners = new Set<RoomEventListener>()
+  private readonly timers = new Map<string, NodeJS.Timeout>()
 
   constructor(@Inject(ROOM_STORE) store: RoomStore) {
     this.store = store
@@ -160,6 +170,88 @@ export class RoomService {
     return room
   }
 
+  startRound(roomCode: string, hostId: string): Room {
+    const room = this.requireRoom(roomCode)
+    this.requireHost(room, hostId)
+
+    if (room.phase === 'playing') {
+      throw new RoomError('ROUND_IN_PROGRESS', 'Já existe uma rodada em andamento.')
+    }
+
+    const issue = validateSettings(room.settings, room.players.length)
+
+    if (issue) {
+      throw new RoomError(issue.code, issue.message)
+    }
+
+    const { location, spyIds, firstAskerId } = createRound(
+      room.players.map((p) => p.id),
+      room.settings,
+    )
+    const durationMs = room.settings.durationInMinutes * 60_000
+
+    room.phase = 'playing'
+    room.round = { location, spyIds, firstAskerId, endsAt: Date.now() + durationMs }
+    this.store.save(room)
+    this.setTimer(`round:${room.code}`, durationMs, () => this.finishRound(room.code))
+
+    this.emit({ type: 'roundStarted', roomCode: room.code })
+    this.emit({ type: 'state', roomCode: room.code })
+    return room
+  }
+
+  /** Host ends the round before the timer. */
+  endRound(roomCode: string, hostId: string): Room {
+    const room = this.requireRoom(roomCode)
+    this.requireHost(room, hostId)
+
+    if (room.phase !== 'playing') {
+      throw new RoomError('INVALID_PAYLOAD', 'Não há rodada em andamento.')
+    }
+
+    this.finishRound(room.code)
+    return room
+  }
+
+  backToLobby(roomCode: string, hostId: string): Room {
+    const room = this.requireRoom(roomCode)
+    this.requireHost(room, hostId)
+
+    if (room.phase === 'playing') {
+      throw new RoomError('ROUND_IN_PROGRESS', 'Termine a rodada antes de voltar ao lobby.')
+    }
+
+    room.phase = 'lobby'
+    room.round = null
+    this.store.save(room)
+    this.emit({ type: 'state', roomCode: room.code })
+    return room
+  }
+
+  /** The private role card of one player; null when no round is running. */
+  roleFor(room: Room, playerId: string): RoundRolePayload | null {
+    if (room.phase !== 'playing' || !room.round) {
+      return null
+    }
+
+    if (room.round.spyIds.includes(playerId)) {
+      return room.settings.spyGetsHint
+        ? { role: 'spy', hint: room.round.location.hint }
+        : { role: 'spy' }
+    }
+
+    return { role: 'player', location: room.round.location.name }
+  }
+
+  /** What everyone learns when the round is over; null before that. */
+  resultOf(room: Room): RoundEndedPayload | null {
+    if (room.phase !== 'result' || !room.round) {
+      return null
+    }
+
+    return { location: room.round.location, spyIds: room.round.spyIds }
+  }
+
   /** Returns the room and player for a code and player id, or throws NOT_IN_ROOM. */
   requireSeat(roomCode: string, playerId: string): Seat {
     const room = this.store.get(roomCode)
@@ -207,6 +299,7 @@ export class RoomService {
     }
 
     if (room.players.length === 0) {
+      this.clearRoomTimers(roomCode)
       this.store.delete(roomCode)
       return
     }
@@ -217,6 +310,47 @@ export class RoomService {
 
     this.store.save(room)
     this.emit({ type: 'state', roomCode })
+  }
+
+  private finishRound(roomCode: string): void {
+    const room = this.store.get(roomCode)
+    this.clearTimer(`round:${roomCode}`)
+
+    if (!room || room.phase !== 'playing') {
+      return
+    }
+
+    room.phase = 'result'
+    this.store.save(room)
+    this.emit({ type: 'roundEnded', roomCode })
+    this.emit({ type: 'state', roomCode })
+  }
+
+  private setTimer(key: string, delayMs: number, callback: () => void): void {
+    this.clearTimer(key)
+    const timer = setTimeout(() => {
+      this.timers.delete(key)
+      callback()
+    }, delayMs)
+    timer.unref()
+    this.timers.set(key, timer)
+  }
+
+  private clearTimer(key: string): void {
+    const timer = this.timers.get(key)
+    if (timer) {
+      clearTimeout(timer)
+      this.timers.delete(key)
+    }
+  }
+
+  /** Cancels every pending timer of a room (round, grace periods, expiry). */
+  protected clearRoomTimers(roomCode: string): void {
+    for (const key of [...this.timers.keys()]) {
+      if (key.split(':')[1] === roomCode) {
+        this.clearTimer(key)
+      }
+    }
   }
 
   private newPlayer(nickname: string): PlayerRecord {

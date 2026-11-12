@@ -95,6 +95,30 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
     })
   }
 
+  @SubscribeMessage(CLIENT_EVENTS.startRound)
+  startRound(@ConnectedSocket() client: Socket): void {
+    this.guard(client, null, undefined, () => {
+      const seat = this.requireSeatRef(client)
+      this.rooms.startRound(seat.roomCode, seat.playerId)
+    })
+  }
+
+  @SubscribeMessage(CLIENT_EVENTS.endRound)
+  endRound(@ConnectedSocket() client: Socket): void {
+    this.guard(client, null, undefined, () => {
+      const seat = this.requireSeatRef(client)
+      this.rooms.endRound(seat.roomCode, seat.playerId)
+    })
+  }
+
+  @SubscribeMessage(CLIENT_EVENTS.backToLobby)
+  backToLobby(@ConnectedSocket() client: Socket): void {
+    this.guard(client, null, undefined, () => {
+      const seat = this.requireSeatRef(client)
+      this.rooms.backToLobby(seat.roomCode, seat.playerId)
+    })
+  }
+
   @SubscribeMessage(CLIENT_EVENTS.leave)
   leave(@ConnectedSocket() client: Socket): void {
     this.guard(client, null, undefined, () => {
@@ -137,11 +161,50 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
       return
     }
 
+    if (event.type === 'roundStarted') {
+      this.sendRoundStart(event.roomCode)
+      return
+    }
+
+    if (event.type === 'roundEnded') {
+      const result = this.rooms.getRoom(event.roomCode)
+      const payload = result && this.rooms.resultOf(result)
+      if (payload) {
+        this.server.to(event.roomCode).emit(SERVER_EVENTS.roundEnded, payload)
+      }
+      return
+    }
+
     const socket = this.sockets.get(this.key(event))
     if (socket) {
       this.detach(socket, event)
       socket.emit(SERVER_EVENTS.left, { reason: event.reason })
     }
+  }
+
+  /**
+   * Each role goes to its owner's socket only, never to the room channel.
+   * `round:started` carries nothing secret and is broadcast.
+   */
+  private sendRoundStart(roomCode: string): void {
+    const room = this.rooms.getRoom(roomCode)
+
+    if (!room?.round) {
+      return
+    }
+
+    for (const player of room.players) {
+      const role = this.rooms.roleFor(room, player.id)
+      const socket = this.sockets.get(this.key({ roomCode, playerId: player.id }))
+      if (role && socket) {
+        socket.emit(SERVER_EVENTS.roundRole, role)
+      }
+    }
+
+    this.server.to(roomCode).emit(SERVER_EVENTS.roundStarted, {
+      firstAskerId: room.round.firstAskerId,
+      endsAt: room.round.endsAt,
+    })
   }
 
   private seatOf(client: Socket): SeatRef | undefined {

@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SETTINGS, MAX_PLAYERS } from '@espiao/game-core'
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from './room-code.ts'
 import { RoomError } from './room.errors.ts'
-import { RoomService } from './room.service.ts'
+import { RoomService, toRoomState } from './room.service.ts'
 import type { RoomEvent } from './room.service.ts'
 import { InMemoryRoomStore } from './room-store.ts'
 
@@ -131,5 +131,133 @@ describe('RoomService: leave, kick, settings', () => {
       customLocations: [{ name: '  Casa da vovó ', hint: ' bolo ' }],
     })
     expect(room.settings.customLocations).toEqual([{ name: 'Casa da vovó', hint: 'bolo' }])
+  })
+})
+
+describe('RoomService: rounds', () => {
+  let service: RoomService
+  let events: RoomEvent[]
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    service = new RoomService(new InMemoryRoomStore())
+    events = []
+    service.onEvent((event) => events.push(event))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function roomOf(count: number, settings: Partial<typeof DEFAULT_SETTINGS> = {}) {
+    const { room, player: host } = service.createRoom('Host')
+    const others = Array.from({ length: count - 1 }, (_, index) => service.joinRoom(room.code, `P${index + 1}`).player)
+    if (Object.keys(settings).length > 0) {
+      service.updateSettings(room.code, host.id, { ...DEFAULT_SETTINGS, ...settings })
+    }
+    events.length = 0
+    return { room, host, others }
+  }
+
+  it('needs at least 3 players and fewer spies than players', () => {
+    const small = roomOf(2)
+    expect(codeOf(() => service.startRound(small.room.code, small.host.id))).toBe('NOT_ENOUGH_PLAYERS')
+
+    const { room, host } = roomOf(4, { spiesCount: 3 })
+    expect(codeOf(() => service.startRound(room.code, host.id))).toBeUndefined()
+
+    const tight = roomOf(4, { spiesCount: 3 })
+    tight.room.players.pop()
+    expect(codeOf(() => service.startRound(tight.room.code, tight.host.id))).toBe('INVALID_SETTINGS')
+  })
+
+  it('only the host starts, and not twice', () => {
+    const { room, host, others } = roomOf(3)
+    expect(codeOf(() => service.startRound(room.code, others[0]!.id))).toBe('NOT_HOST')
+    service.startRound(room.code, host.id)
+    expect(codeOf(() => service.startRound(room.code, host.id))).toBe('ROUND_IN_PROGRESS')
+    expect(codeOf(() => service.updateSettings(room.code, host.id, DEFAULT_SETTINGS))).toBe('ROUND_IN_PROGRESS')
+    expect(codeOf(() => service.joinRoom(room.code, 'Late'))).toBe('ROUND_IN_PROGRESS')
+    expect(codeOf(() => service.kick(room.code, host.id, others[0]!.id))).toBe('ROUND_IN_PROGRESS')
+  })
+
+  it('sets endsAt from the configured duration', () => {
+    vi.setSystemTime(new Date('2026-01-01T12:00:00Z'))
+    const { room, host } = roomOf(3, { durationInMinutes: 8 })
+    service.startRound(room.code, host.id)
+    expect(room.round?.endsAt).toBe(Date.parse('2026-01-01T12:08:00Z'))
+  })
+
+  it('gives spies no location, and the hint only when enabled', () => {
+    const withHint = roomOf(5, { spiesCount: 2, spyGetsHint: true })
+    service.startRound(withHint.room.code, withHint.host.id)
+    const round = withHint.room.round!
+    for (const player of withHint.room.players) {
+      const role = service.roleFor(withHint.room, player.id)!
+      if (round.spyIds.includes(player.id)) {
+        expect(role.role).toBe('spy')
+        expect(role.location).toBeUndefined()
+        expect(role.hint).toBe(round.location.hint)
+      } else {
+        expect(role).toEqual({ role: 'player', location: round.location.name })
+      }
+    }
+
+    const noHint = roomOf(3, { spyGetsHint: false })
+    service.startRound(noHint.room.code, noHint.host.id)
+    const spyId = noHint.room.round!.spyIds[0]!
+    expect(service.roleFor(noHint.room, spyId)).toEqual({ role: 'spy' })
+  })
+
+  it('exposes no roles and no result outside of a running round', () => {
+    const { room, host } = roomOf(3)
+    expect(service.roleFor(room, host.id)).toBeNull()
+    expect(service.resultOf(room)).toBeNull()
+    service.startRound(room.code, host.id)
+    expect(service.resultOf(room)).toBeNull()
+  })
+
+  it('ends by itself when the timer runs out and then reveals the result', () => {
+    const { room, host } = roomOf(3, { durationInMinutes: 2 })
+    service.startRound(room.code, host.id)
+    vi.advanceTimersByTime(2 * 60_000 - 1)
+    expect(room.phase).toBe('playing')
+    vi.advanceTimersByTime(1)
+    expect(room.phase).toBe('result')
+    expect(events.filter((e) => e.type === 'roundEnded')).toHaveLength(1)
+    expect(service.resultOf(room)).toEqual({ location: room.round!.location, spyIds: room.round!.spyIds })
+    expect(service.roleFor(room, host.id)).toBeNull()
+  })
+
+  it('lets the host end early (once) and the timer then does nothing', () => {
+    const { room, host, others } = roomOf(3)
+    expect(codeOf(() => service.endRound(room.code, host.id))).toBe('INVALID_PAYLOAD')
+    service.startRound(room.code, host.id)
+    expect(codeOf(() => service.endRound(room.code, others[0]!.id))).toBe('NOT_HOST')
+    service.endRound(room.code, host.id)
+    vi.advanceTimersByTime(10 * 60_000)
+    expect(events.filter((e) => e.type === 'roundEnded')).toHaveLength(1)
+  })
+
+  it('starts a new round from the result, or goes back to the lobby', () => {
+    const { room, host } = roomOf(3)
+    service.startRound(room.code, host.id)
+    expect(codeOf(() => service.backToLobby(room.code, host.id))).toBe('ROUND_IN_PROGRESS')
+    service.endRound(room.code, host.id)
+    service.startRound(room.code, host.id)
+    expect(room.phase).toBe('playing')
+    service.endRound(room.code, host.id)
+    service.backToLobby(room.code, host.id)
+    expect(room.phase).toBe('lobby')
+    expect(room.round).toBeNull()
+  })
+
+  it('never puts roles or the location in the public room state', () => {
+    const { room, host } = roomOf(4)
+    service.startRound(room.code, host.id)
+    const serialized = JSON.stringify(toRoomState(room))
+    expect(serialized).not.toContain(room.round!.location.name)
+    expect(serialized).not.toContain('spyIds')
+    expect(serialized).not.toContain('sessionToken')
   })
 })

@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { NestFactory } from '@nestjs/core'
 import { IoAdapter } from '@nestjs/platform-socket.io'
-import type { INestApplication } from '@nestjs/common'
+import type { INestApplication, LogLevel } from '@nestjs/common'
 import type { ServerOptions } from 'socket.io'
 import { AppModule } from './app.module.ts'
 import type { ServerConfig } from './config.ts'
@@ -26,8 +26,11 @@ class ConfiguredIoAdapter extends IoAdapter {
   }
 }
 
-export async function createApp(config: ServerConfig): Promise<INestApplication> {
-  const app = await NestFactory.create(AppModule, { logger: ['error', 'warn', 'log'] })
+export async function createApp(
+  config: ServerConfig,
+  logger: LogLevel[] = ['error', 'warn', 'log'],
+): Promise<INestApplication> {
+  const app = await NestFactory.create(AppModule, { logger })
   app.useWebSocketAdapter(new ConfiguredIoAdapter(app, config))
   app.enableShutdownHooks()
   return app
