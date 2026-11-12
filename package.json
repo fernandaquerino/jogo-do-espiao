@@ -1,5 +1,5 @@
 {
-  "name": "jogo-do-espiao",
+  "name": "spy-game",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,14 +9,14 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev:web": "pnpm --filter @espiao/web dev",
-    "dev:server": "pnpm --filter @espiao/server dev",
+    "dev:web": "pnpm --filter @spy-game/web dev",
+    "dev:server": "pnpm --filter @spy-game/server dev",
     "lint": "eslint .",
-    "build:core": "pnpm --filter @espiao/game-core build",
+    "build:core": "pnpm --filter @spy-game/game-core build",
     "typecheck": "pnpm build:core && pnpm -r --if-present typecheck",
     "test": "pnpm build:core && pnpm -r --if-present test",
     "build": "pnpm -r --if-present build",
-    "test:e2e": "pnpm build && pnpm --filter @espiao/e2e test:e2e",
+    "test:e2e": "pnpm build && pnpm --filter @spy-game/e2e test:e2e",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {

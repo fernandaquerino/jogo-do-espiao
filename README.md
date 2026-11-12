@@ -1,54 +1,54 @@
-# Jogo do Espião
+# Spy Game
 
-Jogo de festa no estilo Spyfall, em português do Brasil. Todos menos o(s) espião(ões) descobrem um
-lugar secreto; os jogadores se fazem perguntas, o espião tenta adivinhar o lugar e os demais tentam
-descobrir quem é o espião antes do tempo acabar.
+A party game in the style of Spyfall. Everyone except the spy (or spies) learns a secret location;
+players take turns asking each other questions, the spy tries to work out the location, and
+everyone else tries to find the spy before the timer runs out.
 
-Dois modos:
+Two modes:
 
-- **Jogar neste celular:** um aparelho passado de mão em mão, sem internet.
-- **Jogar online:** cada pessoa usa o próprio celular, entra numa sala com um código (ou link) e vê apenas o próprio papel.
+- **Play on this phone:** one device passed from hand to hand, no internet needed.
+- **Play online:** everyone uses their own phone, joins a room with a code (or link) and sees only their own role.
 
-## Para quem é
+## Who it is for
 
-Grupos de amigos e família jogando na mesma sala ou em videochamada. Sem contas: só apelidos.
+Groups of friends and family playing in the same room or on a video call. No accounts: nicknames only.
 
-## Como jogar
+## How to play
 
-1. Uma pessoa cria a sala (online) ou configura a partida (local) e chama os outros pelo link `/sala/CÓDIGO`.
-2. Com pelo menos 3 jogadores, o anfitrião escolhe número de espiões, tempo, se o espião recebe dica e lugares extras, e inicia a rodada.
-3. Cada pessoa toca em **Revelar papel**. Quem não é espião vê o lugar; o espião vê "Você é o espião" (e uma dica, se ligada).
-4. A rodada começa com a pessoa indicada fazendo uma pergunta; os jogadores se revezam perguntando e respondendo, sem entregar o lugar de forma óbvia.
-5. O espião tenta descobrir o lugar; os outros tentam descobrir o espião antes de o tempo acabar.
-6. Ao fim (tempo esgotado ou anfitrião encerrando), o lugar e os espiões são revelados para todos.
+1. One person creates a room (online) or sets up the match (local) and invites the others with the link `/room/CODE`.
+2. With at least 3 players, the host picks the number of spies, the time, whether the spy gets a hint and any extra locations, then starts the round.
+3. Everyone taps **Reveal role**. Players who are not the spy see the location; the spy sees "You are the spy" (plus a hint, if enabled).
+4. The round starts with the indicated player asking a question; players take turns asking and answering without giving the location away too obviously.
+5. The spy tries to figure out the location; the others try to find the spy before time runs out.
+6. When the time is up (or the host ends the round) the location and the spies are revealed to everyone.
 
 ## Stack
 
-- Node.js 24 LTS (o projeto também roda no 22), pnpm workspaces, TypeScript estrito.
+- Node.js 24 LTS (the project also runs on 22), pnpm workspaces, strict TypeScript.
 - `apps/web`: React 19 + Vite + React Router.
-- `apps/server`: NestJS + Socket.IO, validação com zod.
-- `packages/game-core`: regras do jogo e lista de lugares, usadas pelo modo local e pelo servidor (além dos tipos do protocolo).
-- Testes: Vitest (unidade e integração) e Playwright (E2E).
+- `apps/server`: NestJS + Socket.IO, validation with zod.
+- `packages/game-core`: game rules and the list of locations, used by local mode and by the server (plus the protocol types).
+- Tests: Vitest (unit and integration) and Playwright (E2E).
 
 ```
-apps/web         app web (modo local e online)
-apps/server      servidor de salas em tempo real
-apps/e2e         testes ponta a ponta (Playwright)
+apps/web         web app (local and online mode)
+apps/server      real-time room server
+apps/e2e         end-to-end tests (Playwright)
 packages/game-core
-docs/SPEC.md     especificação do projeto
+docs/SPEC.md     project specification
 ```
 
-O servidor é a autoridade: sorteia lugar, espiões e quem pergunta primeiro, é dono do horário de
-fim da rodada e só envia a cada jogador o próprio papel. Os papéis dos outros só chegam em `round:ended`.
+The server is authoritative: it draws the location, the spies and who asks first, owns the round end
+time, and sends each player only their own role. Other players' roles arrive only in `round:ended`.
 
-## Rodando localmente
+## Running locally
 
 ```bash
 pnpm install
-pnpm build:core        # gera packages/game-core/dist (necessário uma vez e a cada mudança no core)
+pnpm build:core        # builds packages/game-core/dist (needed once and after every change to the core)
 ```
 
-Em dois terminais:
+In two terminals:
 
 ```bash
 pnpm dev:server        # http://localhost:3000
@@ -58,90 +58,91 @@ pnpm dev:server        # http://localhost:3000
 pnpm dev:web           # http://localhost:5173
 ```
 
-Para jogar online em dois aparelhos na mesma rede, abra o endereço do Vite pelo IP do computador e
-defina `VITE_SERVER_URL` e `CORS_ORIGIN` (veja abaixo).
+To play online on two devices on the same network, open the Vite address through the computer's IP
+and set `VITE_SERVER_URL` and `CORS_ORIGIN` (see below).
 
-### Variáveis de ambiente
+### Environment variables
 
-| Onde | Variável | Padrão | Para quê |
+| Where | Variable | Default | Purpose |
 |---|---|---|---|
-| servidor | `PORT` | `3000` | Porta HTTP/WebSocket |
-| servidor | `CORS_ORIGIN` | `http://localhost:5173` | Origens do web permitidas, separadas por vírgula |
-| web (build) | `VITE_SERVER_URL` | `http://localhost:3000` | URL pública do servidor |
+| server | `PORT` | `3000` | HTTP/WebSocket port |
+| server | `CORS_ORIGIN` | `http://localhost:5173` | Allowed web origins, comma-separated |
+| web (build) | `VITE_SERVER_URL` | `http://localhost:3000` | Public URL of the server |
 
-Modelos em `apps/server/.env.example` e `apps/web/.env.example`. Nunca versione arquivos `.env` reais.
+Templates are in `apps/server/.env.example` and `apps/web/.env.example`. Never commit real `.env` files.
 
-## Testes
+## Testing
 
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test          # game-core, servidor (serviço + gateway com socket.io-client) e web
+pnpm test          # game-core, server (service + gateway with socket.io-client) and web
 pnpm build
-pnpm test:e2e      # Playwright com três navegadores: cria sala, entra, joga uma rodada
+pnpm test:e2e      # Playwright with three browsers: create a room, join, play one round
 ```
 
-O E2E sobe servidor e web sozinho. Se o Chromium do Playwright não estiver instalado, use
-`pnpm --filter @espiao/e2e exec playwright install chromium` ou aponte `PLAYWRIGHT_CHROMIUM_PATH`
-para um Chromium existente.
+The E2E suite starts the server and the web app by itself. If Playwright's Chromium is not
+installed, run `pnpm --filter @spy-game/e2e exec playwright install chromium` or point
+`PLAYWRIGHT_CHROMIUM_PATH` at an existing Chromium.
 
 ## Deploy
 
-O servidor guarda as salas **na memória**: rode **uma única instância sempre ligada**. Reiniciar o
-servidor apaga as salas (os jogadores veem "sua vaga expirou"). Instâncias gratuitas que dormem
-também perdem as salas. Redis está no [roadmap](ROADMAP.md).
+The server keeps rooms **in memory**: run **a single, always-on instance**. Restarting the server
+deletes the rooms (players see "your seat expired"). Free instances that go to sleep also lose
+rooms. Redis is on the [roadmap](ROADMAP.md).
 
-### 1. Servidor (Render ou Fly.io)
+### 1. Server (Render or Fly.io)
 
-O `Dockerfile` da raiz serve para os dois. Ele não foi construído em CI; os passos foram
-conferidos à mão fora do Docker, então faça o primeiro deploy acompanhando o log.
+The `Dockerfile` at the repository root works for both. It is not built in CI; its steps were
+checked by hand outside Docker, so watch the log on the first deploy.
 
-**Render:** crie um Blueprint a partir do repositório (usa `render.yaml`) e defina
-`CORS_ORIGIN` com a URL do web (por exemplo `https://espiao.vercel.app`). A saúde é checada em `/health`.
+**Render:** create a Blueprint from the repository (it uses `render.yaml`) and set `CORS_ORIGIN`
+to the web app URL (for example `https://spy-game.vercel.app`). Health is checked at `/health`.
 
 **Fly.io:**
 
 ```bash
 fly launch --no-deploy --copy-config
-fly secrets set CORS_ORIGIN=https://seu-app.vercel.app
+fly secrets set CORS_ORIGIN=https://your-app.vercel.app
 fly deploy
 ```
 
 ### 2. Web (Vercel)
 
-Importe o repositório, defina **Root Directory** como `apps/web` (deixe ligada a opção de incluir
-arquivos fora do diretório raiz) e a variável `VITE_SERVER_URL` com a URL pública do servidor
-(`https://...`). `apps/web/vercel.json` já traz os comandos de instalação e build e o
-redirecionamento das rotas (`/sala/CÓDIGO`) para o `index.html`.
+Import the repository, set **Root Directory** to `apps/web` (keep the option to include files
+outside the root directory enabled) and set `VITE_SERVER_URL` to the server's public URL
+(`https://...`). `apps/web/vercel.json` already contains the install and build commands and the
+rewrite that sends routes such as `/room/CODE` to `index.html`.
 
-Depois do deploy do web, volte ao servidor e confirme que `CORS_ORIGIN` é exatamente a URL do web.
+After deploying the web app, go back to the server and make sure `CORS_ORIGIN` is exactly the web app URL.
 
-## Protocolo (resumo)
+## Protocol (summary)
 
-Detalhes e tipos em `packages/game-core/src/protocol.ts`; a especificação está em [docs/SPEC.md](docs/SPEC.md).
-Além dos eventos da especificação, foram adicionados:
+Details and types are in `packages/game-core/src/protocol.ts`; the specification is in [docs/SPEC.md](docs/SPEC.md).
+In addition to the events in the specification, these were added:
 
-- `room:backToLobby` (anfitrião): volta do resultado para o lobby.
-- `room:left { reason }`: avisa quem saiu ou foi removido.
-- Códigos de erro `INVALID_PAYLOAD`, `NOT_IN_ROOM` e `SESSION_INVALID`.
-- `serverNow` em `round:started`, para o cronômetro acertar o relógio de aparelhos desregulados.
+- `room:backToLobby` (host): go from the result back to the lobby.
+- `room:left { reason }`: tells a player they left or were removed.
+- Error codes `INVALID_PAYLOAD`, `NOT_IN_ROOM` and `SESSION_INVALID`.
+- `serverNow` in `round:started`, so the countdown can correct for devices with a wrong clock.
 
-Regras de sala: máximo de 20 jogadores; quem perde a conexão mantém a vaga por 60 s (se ainda houver
-alguém conectado; com todos offline as vagas ficam até a sala expirar); sem jogadores conectados por
-10 minutos a sala é apagada; entrar com uma rodada em andamento é recusado (`ROUND_IN_PROGRESS`);
-no máximo 20 eventos por segundo por conexão e mensagens acima de 32 KB derrubam a conexão.
+Room rules: at most 20 players; a player who loses the connection keeps their seat for 60 s (if at
+least one other player is connected; when everyone is offline seats are kept until the room
+expires); a room with no connected players for 10 minutes is deleted; joining during a round is
+refused (`ROUND_IN_PROGRESS`); at most 20 events per second per connection, and messages over
+32 KB drop the connection.
 
-## Privacidade
+## Privacy
 
-Sem contas. Jogadores são apelidos, mantidos só na memória do servidor enquanto a sala existe.
-O navegador guarda localmente (`localStorage`) o apelido e o token da vaga para reconectar.
+No accounts. Players are nicknames, kept only in server memory while the room exists. The browser
+stores the nickname and the seat token locally (`localStorage`) so it can reconnect.
 
 ## Status
 
-Fase 1 (modo online) concluída: salas, lobby, revelação privada, cronômetro sincronizado,
-reconexão, testes de unidade, integração e E2E. O que vem depois está em [ROADMAP.md](ROADMAP.md)
-(e como issues em [docs/ISSUES.md](docs/ISSUES.md)); nada daquilo foi implementado.
+Phase 1 (online mode) is done: rooms, lobby, private reveal, synchronized countdown, reconnection,
+and unit, integration and E2E tests. What comes next is in [ROADMAP.md](ROADMAP.md) (and as issues
+in [docs/ISSUES.md](docs/ISSUES.md)); none of it is implemented.
 
-## Licença
+## License
 
 [MIT](LICENSE)

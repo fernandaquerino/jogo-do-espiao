@@ -7,14 +7,14 @@ import {
   MIN_PLAYERS,
   createRound,
   validateSettings,
-} from '@espiao/game-core'
+} from '@spy-game/game-core'
 import type {
   PublicPlayer,
   RoomStatePayload,
   RoundEndedPayload,
   RoundRolePayload,
   RoundSettings,
-} from '@espiao/game-core'
+} from '@spy-game/game-core'
 import { RoomError } from './room.errors.ts'
 import {
   generateRoomCode,
@@ -61,7 +61,7 @@ function cleanNickname(input: string): string {
   if (nickname.length < 1 || nickname.length > MAX_NICKNAME_LENGTH) {
     throw new RoomError(
       'INVALID_PAYLOAD',
-      `O apelido precisa ter entre 1 e ${MAX_NICKNAME_LENGTH} caracteres.`,
+      `The nickname must be between 1 and ${MAX_NICKNAME_LENGTH} characters.`,
     )
   }
 
@@ -110,15 +110,15 @@ export class RoomService {
     const nickname = cleanNickname(nicknameInput)
 
     if (room.phase === 'playing') {
-      throw new RoomError('ROUND_IN_PROGRESS', 'Uma rodada está em andamento. Aguarde o fim dela.')
+      throw new RoomError('ROUND_IN_PROGRESS', 'A round is in progress. Wait for it to finish.')
     }
 
     if (room.players.length >= MAX_PLAYERS) {
-      throw new RoomError('ROOM_FULL', 'A sala está cheia.')
+      throw new RoomError('ROOM_FULL', 'The room is full.')
     }
 
     if (room.players.some((p) => p.nickname.toLowerCase() === nickname.toLowerCase())) {
-      throw new RoomError('NICKNAME_TAKEN', 'Já existe um jogador com esse apelido na sala.')
+      throw new RoomError('NICKNAME_TAKEN', 'Another player in the room already has that nickname.')
     }
 
     const player = this.newPlayer(nickname)
@@ -141,7 +141,7 @@ export class RoomService {
     const player = room.players.find((p) => tokensMatch(p.sessionToken, sessionToken))
 
     if (!player) {
-      throw new RoomError('SESSION_INVALID', 'Sua vaga na sala expirou. Entre novamente.')
+      throw new RoomError('SESSION_INVALID', 'Your seat in the room expired. Please join again.')
     }
 
     this.clearTimer(`grace:${room.code}:${player.id}`)
@@ -187,11 +187,11 @@ export class RoomService {
     this.requireHost(room, hostId)
 
     if (room.phase === 'playing') {
-      throw new RoomError('ROUND_IN_PROGRESS', 'Não é possível remover jogadores durante a rodada.')
+      throw new RoomError('ROUND_IN_PROGRESS', 'Players cannot be removed during a round.')
     }
 
     if (targetId === hostId || !room.players.some((p) => p.id === targetId)) {
-      throw new RoomError('INVALID_PAYLOAD', 'Jogador inválido.')
+      throw new RoomError('INVALID_PAYLOAD', 'Invalid player.')
     }
 
     this.removePlayer(room.code, targetId, 'kicked', true)
@@ -202,7 +202,7 @@ export class RoomService {
     this.requireHost(room, hostId)
 
     if (room.phase === 'playing') {
-      throw new RoomError('ROUND_IN_PROGRESS', 'As configurações não podem mudar durante a rodada.')
+      throw new RoomError('ROUND_IN_PROGRESS', 'Settings cannot change during a round.')
     }
 
     // Not enough players is fine while editing; spies are checked against the larger of
@@ -230,7 +230,7 @@ export class RoomService {
     this.requireHost(room, hostId)
 
     if (room.phase === 'playing') {
-      throw new RoomError('ROUND_IN_PROGRESS', 'Já existe uma rodada em andamento.')
+      throw new RoomError('ROUND_IN_PROGRESS', 'A round is already in progress.')
     }
 
     const issue = validateSettings(room.settings, room.players.length)
@@ -261,7 +261,7 @@ export class RoomService {
     this.requireHost(room, hostId)
 
     if (room.phase !== 'playing') {
-      throw new RoomError('INVALID_PAYLOAD', 'Não há rodada em andamento.')
+      throw new RoomError('INVALID_PAYLOAD', 'There is no round in progress.')
     }
 
     this.finishRound(room.code)
@@ -273,7 +273,7 @@ export class RoomService {
     this.requireHost(room, hostId)
 
     if (room.phase === 'playing') {
-      throw new RoomError('ROUND_IN_PROGRESS', 'Termine a rodada antes de voltar ao lobby.')
+      throw new RoomError('ROUND_IN_PROGRESS', 'End the round before going back to the lobby.')
     }
 
     room.phase = 'lobby'
@@ -313,7 +313,7 @@ export class RoomService {
     const player = room?.players.find((p) => p.id === playerId)
 
     if (!room || !player) {
-      throw new RoomError('NOT_IN_ROOM', 'Você não está nesta sala.')
+      throw new RoomError('NOT_IN_ROOM', 'You are not in this room.')
     }
 
     return { room, player }
@@ -323,7 +323,7 @@ export class RoomService {
     const room = this.store.get(normalizeRoomCode(codeInput))
 
     if (!room) {
-      throw new RoomError('ROOM_NOT_FOUND', 'Sala não encontrada. Confira o código.')
+      throw new RoomError('ROOM_NOT_FOUND', 'Room not found. Check the code.')
     }
 
     return room
@@ -331,7 +331,7 @@ export class RoomService {
 
   protected requireHost(room: Room, playerId: string): void {
     if (room.hostId !== playerId) {
-      throw new RoomError('NOT_HOST', 'Só quem criou a sala pode fazer isso.')
+      throw new RoomError('NOT_HOST', 'Only the host can do that.')
     }
   }
 
@@ -444,6 +444,6 @@ export class RoomService {
         return code
       }
     }
-    throw new RoomError('ROOM_FULL', 'Não foi possível criar a sala agora. Tente de novo.')
+    throw new RoomError('ROOM_FULL', 'Could not create a room right now. Please try again.')
   }
 }

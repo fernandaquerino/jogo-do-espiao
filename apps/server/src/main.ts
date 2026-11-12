@@ -5,4 +5,4 @@ import { loadConfig } from './config.ts'
 const config = loadConfig()
 const app = await createApp(config)
 await app.listen(config.port, '0.0.0.0')
-new Logger('Bootstrap').log(`Servidor ouvindo na porta ${config.port}`)
+new Logger('Bootstrap').log(`Server listening on port ${config.port}`)

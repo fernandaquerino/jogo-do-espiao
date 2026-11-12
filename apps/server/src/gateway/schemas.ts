@@ -3,7 +3,7 @@ import {
   MAX_LOCATION_HINT_LENGTH,
   MAX_LOCATION_NAME_LENGTH,
   MAX_NICKNAME_LENGTH,
-} from '@espiao/game-core'
+} from '@spy-game/game-core'
 import { z } from 'zod'
 
 const nickname = z.string().max(MAX_NICKNAME_LENGTH * 4)

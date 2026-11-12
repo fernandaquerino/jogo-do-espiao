@@ -27,25 +27,25 @@ export function validateSettings(
   if (playersCount < MIN_PLAYERS) {
     return {
       code: 'NOT_ENOUGH_PLAYERS',
-      message: `O jogo precisa de pelo menos ${MIN_PLAYERS} jogadores.`,
+      message: `The game needs at least ${MIN_PLAYERS} players.`,
     }
   }
 
   if (playersCount > MAX_PLAYERS) {
     return {
       code: 'INVALID_SETTINGS',
-      message: `O limite é de ${MAX_PLAYERS} jogadores.`,
+      message: `The limit is ${MAX_PLAYERS} players.`,
     }
   }
 
   if (!Number.isInteger(settings.spiesCount) || settings.spiesCount < 1) {
-    return { code: 'INVALID_SETTINGS', message: 'Escolha pelo menos 1 espião.' }
+    return { code: 'INVALID_SETTINGS', message: 'Choose at least 1 spy.' }
   }
 
   if (settings.spiesCount >= playersCount) {
     return {
       code: 'INVALID_SETTINGS',
-      message: 'A quantidade de espiões deve ser menor que a de jogadores.',
+      message: 'The number of spies must be lower than the number of players.',
     }
   }
 
@@ -55,21 +55,21 @@ export function validateSettings(
   ) {
     return {
       code: 'INVALID_SETTINGS',
-      message: `O tempo de jogo precisa ser de pelo menos ${MIN_DURATION_MINUTES} minuto.`,
+      message: `The game time must be at least ${MIN_DURATION_MINUTES} minute.`,
     }
   }
 
   if (settings.durationInMinutes > MAX_DURATION_MINUTES) {
     return {
       code: 'INVALID_SETTINGS',
-      message: `O tempo de jogo pode ter no máximo ${MAX_DURATION_MINUTES} minutos.`,
+      message: `The game time can be at most ${MAX_DURATION_MINUTES} minutes.`,
     }
   }
 
   if (settings.customLocations.length > MAX_CUSTOM_LOCATIONS) {
     return {
       code: 'INVALID_SETTINGS',
-      message: `Use no máximo ${MAX_CUSTOM_LOCATIONS} lugares personalizados.`,
+      message: `Use at most ${MAX_CUSTOM_LOCATIONS} custom locations.`,
     }
   }
 
@@ -83,7 +83,7 @@ export function validateSettings(
   if (badLocation) {
     return {
       code: 'INVALID_SETTINGS',
-      message: 'Há um lugar personalizado com nome vazio ou texto muito longo.',
+      message: 'A custom location has an empty name or text that is too long.',
     }
   }
 

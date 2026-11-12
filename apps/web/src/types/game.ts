@@ -1,4 +1,4 @@
-import type { Location, PlayerRole } from '@espiao/game-core'
+import type { Location, PlayerRole } from '@spy-game/game-core'
 
 export type { Location, PlayerRole }
 

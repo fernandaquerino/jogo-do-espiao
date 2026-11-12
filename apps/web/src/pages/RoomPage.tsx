@@ -8,9 +8,9 @@ import { OnlineRoundScreen } from '../online/screens/OnlineRoundScreen'
 import { useRoomClient, useRoomState } from '../online/useRoomClient'
 
 const LEFT_MESSAGES = {
-  kicked: 'Você foi removido da sala pelo anfitrião.',
-  left: 'Você saiu da sala.',
-  expired: 'Sua vaga na sala expirou ou a sala não existe mais.',
+  kicked: 'You were removed from the room by the host.',
+  left: 'You left the room.',
+  expired: 'Your seat in the room expired or the room no longer exists.',
 } as const
 
 export function RoomPage() {
@@ -47,7 +47,7 @@ export function RoomPage() {
       <main className="screen">
         {banner}
         <section className="panel">
-          <p className="lede">Entrando na sala {roomCode}…</p>
+          <p className="lede">Joining room {roomCode}…</p>
         </section>
       </main>
     )
@@ -64,15 +64,15 @@ export function RoomPage() {
         </section>
       ) : null}
       <JoinForm
-        title={`Entrar na sala ${roomCode}`}
-        submitLabel="Entrar na sala"
+        title={`Join room ${roomCode}`}
+        submitLabel="Join room"
         fixedCode={roomCode}
         disabled={state.pending}
         error={state.error?.message ?? null}
         onSubmit={(nickname) => client.join(roomCode, nickname)}
       />
       <Link to="/" className="back-link">
-        ← Início
+        ← Home
       </Link>
     </main>
   )

@@ -35,7 +35,7 @@ export function SetupScreen({
   function updatePlayersCount(playersCount: number) {
     const safePlayersCount = getSafePlayersCount(playersCount)
     const playerNames = Array.from({ length: safePlayersCount }, (_, index) => {
-      return config.playerNames[index] || `Jogador ${index + 1}`
+      return config.playerNames[index] || `Player ${index + 1}`
     })
 
     updateConfig({
@@ -86,21 +86,21 @@ export function SetupScreen({
     <main className="screen setup-screen">
       <section className="hero-panel">
         <Link to="/" className="back-link">
-          ← Início
+          ← Home
         </Link>
-        <p className="eyebrow">Jogo em grupo</p>
-        <h1>Espião</h1>
+        <p className="eyebrow">Group game</p>
+        <h1>Spy</h1>
         <p className="lede">
-          Configure a rodada, entregue o celular de jogador em jogador e deixe a
-          suspeita fazer o resto.
+          Set up the round, pass the phone from player to player and let
+          suspicion do the rest.
         </p>
       </section>
 
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Preparação</p>
-            <h2>Configuração da partida</h2>
+            <p className="eyebrow">Setup</p>
+            <h2>Match settings</h2>
           </div>
           <span className="pill">{locationsCount} lugares</span>
         </div>
@@ -111,7 +111,7 @@ export function SetupScreen({
           onChange={updateConfig}
           leading={
             <label className="field">
-              <span>Jogadores</span>
+              <span>Players</span>
               <input
                 type="number"
                 min="3"
@@ -131,13 +131,13 @@ export function SetupScreen({
         <div className="panel-heading">
           <div>
             <p className="eyebrow">Opcional</p>
-            <h2>Nomes dos jogadores</h2>
+            <h2>Player names</h2>
           </div>
         </div>
         <div className="names-grid">
           {Array.from({ length: config.playersCount }, (_, index) => (
             <label className="field compact-field" key={index}>
-              <span>Jogador {index + 1}</span>
+              <span>Player {index + 1}</span>
               <input
                 type="text"
                 value={config.playerNames[index] ?? ''}
@@ -152,7 +152,7 @@ export function SetupScreen({
         <div className="panel-heading">
           <div>
             <p className="eyebrow">Opcional</p>
-            <h2>Lugares customizados</h2>
+            <h2>Custom locations</h2>
           </div>
         </div>
         <CustomLocationsEditor
@@ -167,7 +167,7 @@ export function SetupScreen({
         disabled={Boolean(error)}
         onClick={onStart}
       >
-        Iniciar jogo
+        Start game
       </button>
     </main>
   )

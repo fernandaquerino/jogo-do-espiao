@@ -15,25 +15,25 @@ export function ResultScreen({
   round,
   onPlayAgain,
   onNewConfig,
-  playAgainLabel = 'Jogar novamente',
-  newConfigLabel = 'Nova configuração',
+  playAgainLabel = 'Play again',
+  newConfigLabel = 'New settings',
   footer,
 }: ResultScreenProps) {
   const spies = round.players.filter((player) => player.role === 'spy')
-  const hintText = round.location.hint || 'Dica não cadastrada'
+  const hintText = round.location.hint || 'No hint available'
 
   return (
     <main className="screen result-screen">
       <section className="panel">
         <p className="eyebrow">Resultado</p>
         <h1>{round.location.name}</h1>
-        <p className="lede">Dica usada: {hintText}</p>
+        <p className="lede">Hint used: {hintText}</p>
       </section>
 
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Espiões</p>
+            <p className="eyebrow">Spies</p>
             <h2>{spies.map((spy) => spy.name).join(', ')}</h2>
           </div>
         </div>
@@ -42,7 +42,7 @@ export function ResultScreen({
           {round.players.map((player) => (
             <div className="result-row" key={player.id}>
               <span>{player.name}</span>
-              <strong>{player.role === 'spy' ? 'Espião' : 'Jogador comum'}</strong>
+              <strong>{player.role === 'spy' ? 'Spy' : 'Regular player'}</strong>
             </div>
           ))}
         </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import type { Location, RoundSettings } from '@espiao/game-core'
+import type { Location, RoundSettings } from '@spy-game/game-core'
 import { NumberField } from '../NumberField/NumberField'
 
 const TIME_OPTIONS = [3, 5, 8, 10, 15]
@@ -27,7 +27,7 @@ export function SettingsFields({
       <div className="form-grid">
         {leading}
         <NumberField
-          label="Espiões"
+          label="Spies"
           value={settings.spiesCount}
           min={1}
           max={Math.max(1, playersCount - 1)}
@@ -35,7 +35,7 @@ export function SettingsFields({
           onCommit={(spiesCount) => onChange({ spiesCount })}
         />
         <NumberField
-          label="Tempo em minutos"
+          label="Time in minutes"
           value={settings.durationInMinutes}
           min={1}
           max={60}
@@ -49,11 +49,11 @@ export function SettingsFields({
             disabled={disabled}
             onChange={(event) => onChange({ spyGetsHint: event.target.checked })}
           />
-          <span>Espião recebe dica?</span>
+          <span>Does the spy get a hint?</span>
         </label>
       </div>
 
-      <div className="segmented-control" aria-label="Tempos sugeridos">
+      <div className="segmented-control" aria-label="Suggested times">
         {TIME_OPTIONS.map((minutes) => (
           <button
             type="button"
@@ -95,29 +95,29 @@ export function CustomLocationsEditor({ locations, onChange, disabled }: CustomL
     <>
       <div className="custom-location-form">
         <label className="field">
-          <span>Lugar</span>
+          <span>Location</span>
           <input
             type="text"
             maxLength={40}
             disabled={disabled}
             value={draft.name}
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-            placeholder="Ex.: Cafeteria"
+            placeholder="E.g. Coffee shop"
           />
         </label>
         <label className="field">
-          <span>Dica</span>
+          <span>Hint</span>
           <input
             type="text"
             maxLength={120}
             disabled={disabled}
             value={draft.hint}
             onChange={(event) => setDraft({ ...draft, hint: event.target.value })}
-            placeholder="Ex.: lugar com balcão, xícaras e aroma de café"
+            placeholder="E.g. a place with a counter, cups and the smell of coffee"
           />
         </label>
         <button type="button" className="secondary-button" disabled={disabled} onClick={add}>
-          Adicionar
+          Add
         </button>
       </div>
 
@@ -131,7 +131,7 @@ export function CustomLocationsEditor({ locations, onChange, disabled }: CustomL
               onClick={() => onChange(locations.filter((item) => item.name !== location.name))}
               key={location.name}
             >
-              {location.name} remover
+              {location.name} remove
             </button>
           ))}
         </div>

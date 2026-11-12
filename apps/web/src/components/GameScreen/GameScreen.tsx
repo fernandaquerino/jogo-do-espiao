@@ -18,19 +18,19 @@ export function GameScreen({ config, round, onFinishRound }: GameScreenProps) {
   return (
     <main className="screen game-screen">
       <section className="panel game-panel">
-        <p className="eyebrow">Rodada em andamento</p>
-        <h1>Façam perguntas e observem as respostas</h1>
+        <p className="eyebrow">Round in progress</p>
+        <h1>Ask questions and watch the answers</h1>
         <div className="starter-callout">
-          <span>Começa perguntando</span>
-          <strong>{firstAsker?.name ?? 'Jogador 1'}</strong>
+          <span>Asks first</span>
+          <strong>{firstAsker?.name ?? 'Player 1'}</strong>
         </div>
         <Timer
           durationInMinutes={config.durationInMinutes}
           onTimeUp={handleTimeUp}
         />
-        {isTimeUp ? <p className="success-message">Tempo encerrado!</p> : null}
+        {isTimeUp ? <p className="success-message">Time is up!</p> : null}
         <button type="button" className="danger-button" onClick={onFinishRound}>
-          Finalizar rodada
+          End round
         </button>
       </section>
     </main>

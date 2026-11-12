@@ -24,7 +24,7 @@ export function OnlineResultScreen({ client, state }: OnlineResultScreenProps) {
   // A spy who left the room for good is no longer in the player list.
   for (const spyId of result.spyIds) {
     if (!players.some((player) => player.id === spyId)) {
-      players.push({ id: spyId, name: 'Jogador que saiu', role: 'spy' })
+      players.push({ id: spyId, name: 'Player who left', role: 'spy' })
     }
   }
 
@@ -35,10 +35,10 @@ export function OnlineResultScreen({ client, state }: OnlineResultScreenProps) {
       round={round}
       onPlayAgain={isHost ? () => client.startRound() : undefined}
       onNewConfig={isHost ? () => client.backToLobby() : undefined}
-      playAgainLabel="Nova rodada"
-      newConfigLabel="Voltar ao lobby"
+      playAgainLabel="New round"
+      newConfigLabel="Back to lobby"
       footer={
-        isHost ? null : <p className="success-message">Aguardando o anfitrião escolher o próximo passo…</p>
+        isHost ? null : <p className="success-message">Waiting for the host to choose what happens next…</p>
       }
     />
   )

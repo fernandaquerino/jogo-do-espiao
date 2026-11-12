@@ -25,25 +25,25 @@ export function OnlineRoundScreen({ client, state }: OnlineRoundScreenProps) {
   const roleBox = (
     <div className={`role-box ${revealed ? 'revealed' : ''}`}>
       {!role ? (
-        <p className="role-title">Carregando seu papel…</p>
+        <p className="role-title">Loading your role…</p>
       ) : revealed ? (
         role.role === 'spy' ? (
           <>
-            <p className="role-title">Você é o espião</p>
+            <p className="role-title">You are the spy</p>
             {room.settings.spyGetsHint ? (
-              <p className="role-detail">Dica: {role.hint || 'Dica ainda não cadastrada'}</p>
+              <p className="role-detail">Hint: {role.hint || 'No hint available yet'}</p>
             ) : null}
           </>
         ) : (
           <>
-            <p className="role-title">Lugar</p>
+            <p className="role-title">Location</p>
             <p className="role-detail">{role.location}</p>
           </>
         )
       ) : (
         <>
-          <p className="role-title">Seu papel está oculto</p>
-          <p className="role-detail">Toque para ver. Só você enxerga esta tela.</p>
+          <p className="role-title">Your role is hidden</p>
+          <p className="role-detail">Tap to reveal. Only you can see this screen.</p>
         </>
       )}
     </div>
@@ -53,7 +53,7 @@ export function OnlineRoundScreen({ client, state }: OnlineRoundScreenProps) {
     return (
       <main className="screen reveal-screen">
         <section className="panel reveal-card">
-          <p className="eyebrow">Seu papel</p>
+          <p className="eyebrow">Your role</p>
           <h1>{you.nickname}</h1>
           {roleBox}
           <div className="actions">
@@ -63,7 +63,7 @@ export function OnlineRoundScreen({ client, state }: OnlineRoundScreenProps) {
               disabled={!role}
               onClick={() => setRevealed((value) => !value)}
             >
-              {revealed ? 'Ocultar papel' : 'Revelar papel'}
+              {revealed ? 'Hide role' : 'Reveal role'}
             </button>
             <button
               type="button"
@@ -74,7 +74,7 @@ export function OnlineRoundScreen({ client, state }: OnlineRoundScreenProps) {
                 setReady(true)
               }}
             >
-              Estou pronto
+              I am ready
             </button>
           </div>
         </section>
@@ -85,16 +85,16 @@ export function OnlineRoundScreen({ client, state }: OnlineRoundScreenProps) {
   return (
     <main className="screen game-screen">
       <section className="panel game-panel">
-        <p className="eyebrow">Rodada em andamento</p>
-        <h1>Façam perguntas e observem as respostas</h1>
+        <p className="eyebrow">Round in progress</p>
+        <h1>Ask questions and watch the answers</h1>
         <div className="starter-callout">
-          <span>Começa perguntando</span>
+          <span>Asks first</span>
           <strong>{firstAsker?.nickname ?? '—'}</strong>
         </div>
         {round ? (
           <CountdownTimer endsAt={round.endsAt} clockOffsetMs={clockOffsetMs} onTimeUp={handleTimeUp} />
         ) : null}
-        {isTimeUp ? <p className="success-message">Tempo encerrado!</p> : null}
+        {isTimeUp ? <p className="success-message">Time is up!</p> : null}
 
         {roleBox}
         <div className="actions">
@@ -104,11 +104,11 @@ export function OnlineRoundScreen({ client, state }: OnlineRoundScreenProps) {
             disabled={!role}
             onClick={() => setRevealed((value) => !value)}
           >
-            {revealed ? 'Ocultar meu papel' : 'Ver meu papel'}
+            {revealed ? 'Hide my role' : 'See my role'}
           </button>
           {isHost ? (
             <button type="button" className="danger-button" onClick={() => client.endRound()}>
-              Finalizar rodada
+              End round
             </button>
           ) : null}
         </div>

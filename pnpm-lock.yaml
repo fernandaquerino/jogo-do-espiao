@@ -50,9 +50,6 @@ importers:
 
   apps/server:
     dependencies:
-      '@espiao/game-core':
-        specifier: workspace:*
-        version: link:../../packages/game-core
       '@nestjs/common':
         specifier: ^11.0.0
         version: 11.2.9(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -68,6 +65,9 @@ importers:
       '@nestjs/websockets':
         specifier: ^11.0.0
         version: 11.2.9(@nestjs/common@11.2.9(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.2.9)(@nestjs/platform-socket.io@11.2.9)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@spy-game/game-core':
+        specifier: workspace:*
+        version: link:../../packages/game-core
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -96,7 +96,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@espiao/game-core':
+      '@spy-game/game-core':
         specifier: workspace:*
         version: link:../../packages/game-core
       react:

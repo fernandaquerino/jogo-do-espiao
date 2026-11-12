@@ -7,7 +7,7 @@ import type {
   RoundEndedPayload,
   RoundRolePayload,
   RoundStartedPayload,
-} from '@espiao/game-core'
+} from '@spy-game/game-core'
 import { TestClient, settle, startTestServer } from '../testing/test-client.ts'
 import type { TestServer } from '../testing/test-client.ts'
 
@@ -99,7 +99,7 @@ describe('gateway integration', () => {
   it('applies host settings for everyone and rejects them from other players', async () => {
     const { host, joined } = await createRoom()
     const { client } = await joinRoom(joined.roomCode, 'Bia')
-    const settings = { spiesCount: 1, durationInMinutes: 10, spyGetsHint: false, customLocations: [{ name: 'Casa da vovó', hint: 'Bolo' }] }
+    const settings = { spiesCount: 1, durationInMinutes: 10, spyGetsHint: false, customLocations: [{ name: "Grandma's house", hint: 'Cake' }] }
 
     host.emit('room:updateSettings', { settings })
     const state = await client.waitFor<RoomStatePayload>('room:state', (s) => s.settings.durationInMinutes === 10)

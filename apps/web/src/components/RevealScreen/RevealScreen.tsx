@@ -17,7 +17,7 @@ export function RevealScreen({
   const [isRevealComplete, setIsRevealComplete] = useState(false)
   const currentPlayer = round.players[currentPlayerIndex]
   const isLastPlayer = currentPlayerIndex === round.players.length - 1
-  const hintText = round.location.hint || 'Dica ainda não cadastrada'
+  const hintText = round.location.hint || 'No hint available yet'
 
   function hideAndContinue() {
     setIsRevealed(false)
@@ -36,32 +36,32 @@ export function RevealScreen({
         <p className="eyebrow">
           {currentPlayerIndex + 1} de {round.players.length}
         </p>
-        <h1>{isRevealComplete ? 'Todos prontos' : currentPlayer.name}</h1>
+        <h1>{isRevealComplete ? 'Everyone is ready' : currentPlayer.name}</h1>
 
         <div className={`role-box ${isRevealed ? 'revealed' : ''}`}>
           {isRevealComplete ? (
             <>
-              <p className="role-title">Papéis vistos e ocultos</p>
-              <p className="role-detail">Comecem quando o grupo estiver pronto.</p>
+              <p className="role-title">Roles seen and hidden</p>
+              <p className="role-detail">Start when the group is ready.</p>
             </>
           ) : isRevealed ? (
             currentPlayer.role === 'spy' ? (
               <>
-                <p className="role-title">Você é o espião</p>
+                <p className="role-title">You are the spy</p>
                 {config.spyGetsHint ? (
-                  <p className="role-detail">Dica: {hintText}</p>
+                  <p className="role-detail">Hint: {hintText}</p>
                 ) : null}
               </>
             ) : (
               <>
-                <p className="role-title">Lugar</p>
+                <p className="role-title">Location</p>
                 <p className="role-detail">{round.location.name}</p>
               </>
             )
           ) : (
             <>
-              <p className="role-title">Passe o aparelho para este jogador</p>
-              <p className="role-detail">Toque apenas quando estiver pronto.</p>
+              <p className="role-title">Hand the device to this player</p>
+              <p className="role-detail">Tap only when you are ready.</p>
             </>
           )}
         </div>
@@ -69,7 +69,7 @@ export function RevealScreen({
         <div className="actions">
           {isRevealComplete ? (
             <button type="button" className="primary-button" onClick={onStartRound}>
-              Começar rodada
+              Start round
             </button>
           ) : !isRevealed ? (
             <button
@@ -77,7 +77,7 @@ export function RevealScreen({
               className="primary-button"
               onClick={() => setIsRevealed(true)}
             >
-              Revelar papel
+              Reveal role
             </button>
           ) : (
             <button
@@ -86,8 +86,8 @@ export function RevealScreen({
               onClick={hideAndContinue}
             >
               {isLastPlayer
-                ? 'Ocultar papel'
-                : 'Ocultar e passar para o próximo jogador'}
+                ? 'Hide role'
+                : 'Hide and pass to the next player'}
             </button>
           )}
         </div>

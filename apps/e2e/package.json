@@ -1,5 +1,5 @@
 {
-  "name": "@espiao/e2e",
+  "name": "@spy-game/e2e",
   "private": true,
   "version": "0.1.0",
   "type": "module",

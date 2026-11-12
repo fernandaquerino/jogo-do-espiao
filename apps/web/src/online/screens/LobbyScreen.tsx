@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { validateSettings } from '@espiao/game-core'
+import { validateSettings } from '@spy-game/game-core'
 import { CustomLocationsEditor, SettingsFields } from '../../components/SettingsFields/SettingsFields'
 import type { ClientState, RoomClient } from '../RoomClient'
 
@@ -17,7 +17,7 @@ export function LobbyScreen({ client, state }: LobbyScreenProps) {
   }
 
   const isHost = room.hostId === you.id
-  const inviteUrl = `${window.location.origin}/sala/${roomCode}`
+  const inviteUrl = `${window.location.origin}/room/${roomCode}`
   const issue = validateSettings(room.settings, room.players.length)
 
   async function copyInvite() {
@@ -26,13 +26,13 @@ export function LobbyScreen({ client, state }: LobbyScreenProps) {
       setCopied(true)
       window.setTimeout(() => setCopied(false), 2000)
     } catch {
-      window.prompt('Copie o link da sala:', inviteUrl)
+      window.prompt('Copy the room link:', inviteUrl)
     }
   }
 
   async function shareInvite() {
     try {
-      await navigator.share({ title: 'Jogo do Espião', text: 'Entre na minha sala!', url: inviteUrl })
+      await navigator.share({ title: 'Spy Game', text: 'Join my room!', url: inviteUrl })
     } catch {
       // Cancelled by the person: nothing to do.
     }
@@ -42,15 +42,15 @@ export function LobbyScreen({ client, state }: LobbyScreenProps) {
     <main className="screen setup-screen">
       <section className="hero-panel">
         <p className="eyebrow">Sala</p>
-        <h1 aria-label={`Código da sala ${roomCode.split('').join(' ')}`}>{roomCode}</h1>
-        <p className="lede">Chame o pessoal pelo link ou digite o código em “Jogar online”.</p>
+        <h1 aria-label={`Room code ${roomCode.split('').join(' ')}`}>{roomCode}</h1>
+        <p className="lede">Invite everyone with the link, or have them enter the code under “Play online”.</p>
         <div className="actions">
           <button type="button" className="secondary-button" onClick={copyInvite}>
-            {copied ? 'Link copiado!' : 'Copiar link'}
+            {copied ? 'Link copied!' : 'Copy link'}
           </button>
           {typeof navigator.share === 'function' ? (
             <button type="button" className="secondary-button" onClick={shareInvite}>
-              Compartilhar
+              Share
             </button>
           ) : null}
         </div>
@@ -59,8 +59,8 @@ export function LobbyScreen({ client, state }: LobbyScreenProps) {
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Na sala</p>
-            <h2>Jogadores ({room.players.length})</h2>
+            <p className="eyebrow">In the room</p>
+            <h2>Players ({room.players.length})</h2>
           </div>
         </div>
         <ul className="player-list">
@@ -73,17 +73,17 @@ export function LobbyScreen({ client, state }: LobbyScreenProps) {
               />
               <span className="player-name">
                 {player.nickname}
-                {player.id === you.id ? ' (você)' : ''}
+                {player.id === you.id ? ' (you)' : ''}
               </span>
-              {player.id === room.hostId ? <span className="pill">Anfitrião</span> : null}
+              {player.id === room.hostId ? <span className="pill">Host</span> : null}
               {isHost && player.id !== you.id ? (
                 <button
                   type="button"
                   className="secondary-button small-button"
                   onClick={() => client.kick(player.id)}
-                  aria-label={`Remover ${player.nickname}`}
+                  aria-label={`Remove ${player.nickname}`}
                 >
-                  Remover
+                  Remove
                 </button>
               ) : null}
             </li>
@@ -94,8 +94,8 @@ export function LobbyScreen({ client, state }: LobbyScreenProps) {
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Configuração</p>
-            <h2>{isHost ? 'Ajuste a rodada' : 'Rodada definida pelo anfitrião'}</h2>
+            <p className="eyebrow">Settings</p>
+            <h2>{isHost ? 'Adjust the round' : 'Round set by the host'}</h2>
           </div>
         </div>
         <SettingsFields
@@ -107,7 +107,7 @@ export function LobbyScreen({ client, state }: LobbyScreenProps) {
         {isHost ? (
           <>
             <div className="panel-heading spaced">
-              <h2>Lugares customizados</h2>
+              <h2>Custom locations</h2>
             </div>
             <CustomLocationsEditor
               locations={room.settings.customLocations}
@@ -133,14 +133,14 @@ export function LobbyScreen({ client, state }: LobbyScreenProps) {
               disabled={Boolean(issue)}
               onClick={() => client.startRound()}
             >
-              Iniciar rodada
+              Start round
             </button>
           </>
         ) : (
-          <p className="success-message">Aguardando o anfitrião iniciar a rodada…</p>
+          <p className="success-message">Waiting for the host to start the round…</p>
         )}
         <button type="button" className="secondary-button" onClick={() => client.leave()}>
-          Sair da sala
+          Leave room
         </button>
       </div>
     </main>

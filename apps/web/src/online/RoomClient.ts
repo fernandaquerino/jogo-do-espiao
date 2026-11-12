@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client'
 import type { Socket } from 'socket.io-client'
-import { CLIENT_EVENTS, SERVER_EVENTS } from '@espiao/game-core'
+import { CLIENT_EVENTS, SERVER_EVENTS } from '@spy-game/game-core'
 import type {
   ErrorPayload,
   PublicPlayer,
@@ -11,7 +11,7 @@ import type {
   RoundRolePayload,
   RoundSettings,
   RoundStartedPayload,
-} from '@espiao/game-core'
+} from '@spy-game/game-core'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
 
@@ -265,7 +265,7 @@ export class RoomClient {
   }
 }
 
-const STORAGE_KEY = 'espiao:session'
+const STORAGE_KEY = 'spy-game:session'
 
 /** Keeps the seat in localStorage; works (as "no session") when storage is blocked. */
 export const browserSessionStore: SessionStore = {

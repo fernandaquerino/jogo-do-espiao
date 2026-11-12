@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_SETTINGS, MAX_PLAYERS } from '@espiao/game-core'
+import { DEFAULT_SETTINGS, MAX_PLAYERS } from '@spy-game/game-core'
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from './room-code.ts'
 import { RoomError } from './room.errors.ts'
 import { RECONNECT_GRACE_MS, ROOM_EXPIRY_MS, RoomService, toRoomState } from './room.service.ts'
@@ -128,9 +128,9 @@ describe('RoomService: leave, kick, settings', () => {
     const { room, host } = roomOf(3)
     service.updateSettings(room.code, host.id, {
       ...DEFAULT_SETTINGS,
-      customLocations: [{ name: '  Casa da vovó ', hint: ' bolo ' }],
+      customLocations: [{ name: "  Grandma's house ", hint: ' cake ' }],
     })
-    expect(room.settings.customLocations).toEqual([{ name: 'Casa da vovó', hint: 'bolo' }])
+    expect(room.settings.customLocations).toEqual([{ name: "Grandma's house", hint: 'cake' }])
   })
 })
 

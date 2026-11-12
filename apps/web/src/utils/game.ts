@@ -1,4 +1,4 @@
-import { createRound as drawRound, getAvailableLocations as listLocations, validateSettings } from '@espiao/game-core'
+import { createRound as drawRound, getAvailableLocations as listLocations, validateSettings } from '@spy-game/game-core'
 import type { GameConfig, GameRound, Location, Player } from '../types/game'
 
 export const DEFAULT_CONFIG: GameConfig = {
@@ -6,7 +6,7 @@ export const DEFAULT_CONFIG: GameConfig = {
   spiesCount: 1,
   durationInMinutes: 5,
   spyGetsHint: true,
-  playerNames: ['Jogador 1', 'Jogador 2', 'Jogador 3', 'Jogador 4', 'Jogador 5'],
+  playerNames: ['Player 1', 'Player 2', 'Player 3', 'Player 4', 'Player 5'],
   customLocations: [],
 }
 
@@ -17,7 +17,7 @@ export function validateConfig(config: GameConfig): string | null {
 export function buildPlayerNames(count: number, currentNames: string[]): string[] {
   return Array.from({ length: count }, (_, index) => {
     const currentName = currentNames[index]?.trim()
-    return currentName || `Jogador ${index + 1}`
+    return currentName || `Player ${index + 1}`
   })
 }
 
@@ -41,7 +41,7 @@ export function createRound(config: GameConfig): GameRound {
 }
 
 export function loadSavedConfig(): GameConfig {
-  const savedConfig = window.localStorage.getItem('espiao-config')
+  const savedConfig = window.localStorage.getItem('spy-game-config')
 
   if (!savedConfig) {
     return DEFAULT_CONFIG
@@ -74,5 +74,5 @@ export function loadSavedConfig(): GameConfig {
 }
 
 export function saveConfig(config: GameConfig) {
-  window.localStorage.setItem('espiao-config', JSON.stringify(config))
+  window.localStorage.setItem('spy-game-config', JSON.stringify(config))
 }

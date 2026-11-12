@@ -31,7 +31,7 @@ export function CountdownTimer({ endsAt, clockOffsetMs, onTimeUp }: CountdownTim
       <div
         className="timer-display"
         role="timer"
-        aria-label={isOver ? 'Tempo encerrado' : `Faltam ${formatCountdown(remaining)}`}
+        aria-label={isOver ? 'Time is up' : `${formatCountdown(remaining)} left`}
       >
         {formatCountdown(remaining)}
       </div>

@@ -89,14 +89,14 @@ describe('createRound', () => {
   })
 
   it('picks the location from the built-in and custom lists', () => {
-    const custom = { name: 'Casa da vovó', hint: 'Lugar com bolo' }
+    const custom = { name: "Grandma's house", hint: 'A place with cake' }
     const settings = { ...DEFAULT_SETTINGS, customLocations: [custom] }
     expect(getAvailableLocations(settings)).toHaveLength(LOCATIONS.length + 1)
     const seen = new Set<string>()
     for (let seed = 1; seed <= 400; seed += 1) {
       seen.add(createRound(ids, settings, seeded(seed)).location.name)
     }
-    expect(seen.has('Casa da vovó')).toBe(true)
+    expect(seen.has("Grandma's house")).toBe(true)
     expect(seen.size).toBeGreaterThan(10)
   })
 

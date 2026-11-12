@@ -1,5 +1,5 @@
 # Fly.io config for the game server. Create the app first: fly launch --no-deploy --copy-config
-app = "espiao-server"
+app = "spy-game-server"
 primary_region = "gru"
 
 [build]

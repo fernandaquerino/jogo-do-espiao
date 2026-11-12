@@ -15,7 +15,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/local" element={<LocalGame />} />
             <Route path="/online" element={<OnlineEntry />} />
-            <Route path="/sala/:code" element={<RoomPage />} />
+            <Route path="/room/:code" element={<RoomPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </RoomClientProvider>

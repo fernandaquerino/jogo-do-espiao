@@ -1,11 +1,11 @@
-# Jogo do Espião Online: Specification
+# Spy Game Online: Specification
 
 Project brief for the online mode (Phase 1). Summary of the original brief; the build order in
 section 6 is the source of truth for the work.
 
 ## 1. Product
 
-A Spyfall-style party game in Brazilian Portuguese. Everyone except the spy (or spies) learns a
+A Spyfall-style party game in English. Everyone except the spy (or spies) learns a
 secret location; players take turns asking questions, the spy tries to guess the location, and the
 others try to find the spy before the timer runs out.
 
@@ -30,7 +30,7 @@ round result. Room state lives in memory behind a `RoomStore` interface.
 
 ## 3. Online flow
 
-1. Create room: nickname in, 6-char code (no `0/O/1/I`) and link `/sala/CODE` out.
+1. Create room: nickname in, 6-char code (no `0/O/1/I`) and link `/room/CODE` out.
 2. Join: link or code plus a nickname (unique in the room, 1-20 chars).
 3. Lobby: live player list; host edits settings (spies, duration, spy hint, custom locations) and can remove players.
 4. Start: at least 3 players and fewer spies than players. Server draws location, spies and first asker with `game-core`.
@@ -62,8 +62,8 @@ Events are rate-limited per socket and oversized payloads are ignored.
 
 ## 5. Web changes
 
-Home with "Jogar neste celular" and "Jogar online"; routes `/`, `/local`, `/sala/:code` (React Router);
-online screens reuse existing components; connection status banner and Portuguese error messages;
+Home with "Play on this phone" and "Play online"; routes `/`, `/local`, `/online`, `/room/:code` (React Router);
+online screens reuse existing components; connection status banner and English error messages;
 mobile-first, large tap targets, `prefers-reduced-motion` respected; real README.
 
 ## 6. Build order (commit after each step)

@@ -1,4 +1,4 @@
-import type { Location, RoomPhase, RoundSettings } from '@espiao/game-core'
+import type { Location, RoomPhase, RoundSettings } from '@spy-game/game-core'
 
 export type PlayerRecord = {
   id: string

@@ -1,4 +1,4 @@
-const KEY = 'espiao:nickname'
+const KEY = 'spy-game:nickname'
 
 export function loadNickname(): string {
   try {

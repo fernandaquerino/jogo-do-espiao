@@ -1,9 +1,9 @@
 import type { ConnectionStatus } from './RoomClient'
 
 const MESSAGES: Record<Exclude<ConnectionStatus, 'connected'>, string> = {
-  connecting: 'Conectando ao servidor…',
-  reconnecting: 'Conexão perdida. Reconectando…',
-  disconnected: 'Você está desconectado.',
+  connecting: 'Connecting to the server…',
+  reconnecting: 'Connection lost. Reconnecting…',
+  disconnected: 'You are disconnected.',
 }
 
 type ConnectionBannerProps = {
@@ -21,7 +21,7 @@ export function ConnectionBanner({ status, onReconnect }: ConnectionBannerProps)
       <span>{MESSAGES[status]}</span>
       {status === 'disconnected' ? (
         <button type="button" className="link-button" onClick={onReconnect}>
-          Tentar de novo
+          Try again
         </button>
       ) : null}
     </div>

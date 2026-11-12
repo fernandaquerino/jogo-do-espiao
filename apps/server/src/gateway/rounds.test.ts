@@ -5,7 +5,7 @@ import type {
   RoundEndedPayload,
   RoundRolePayload,
   RoundStartedPayload,
-} from '@espiao/game-core'
+} from '@spy-game/game-core'
 import { TestClient, settle, startTestServer } from '../testing/test-client.ts'
 import type { TestServer } from '../testing/test-client.ts'
 

@@ -8,8 +8,8 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets'
-import { CLIENT_EVENTS, SERVER_EVENTS } from '@espiao/game-core'
-import type { ErrorPayload, RoomJoinedPayload } from '@espiao/game-core'
+import { CLIENT_EVENTS, SERVER_EVENTS } from '@spy-game/game-core'
+import type { ErrorPayload, RoomJoinedPayload } from '@spy-game/game-core'
 import type { Server, Socket } from 'socket.io'
 import type { ZodType } from 'zod'
 import { RoomError } from '../rooms/room.errors.ts'
@@ -259,7 +259,7 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
     const seat = this.seatOf(client)
 
     if (!seat) {
-      throw new RoomError('NOT_IN_ROOM', 'Você não está em uma sala.')
+      throw new RoomError('NOT_IN_ROOM', 'You are not in a room.')
     }
 
     return seat
@@ -267,7 +267,7 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
 
   private requireNoSeat(client: Socket): void {
     if (this.seatOf(client)) {
-      throw new RoomError('INVALID_PAYLOAD', 'Você já está em uma sala.')
+      throw new RoomError('INVALID_PAYLOAD', 'You are already in a room.')
     }
   }
 
@@ -296,7 +296,7 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
     if (schema) {
       const parsed = schema.safeParse(body)
       if (!parsed.success) {
-        this.sendError(client, { code: 'INVALID_PAYLOAD', message: 'Dados inválidos.' })
+        this.sendError(client, { code: 'INVALID_PAYLOAD', message: 'Invalid data.' })
         return
       }
       data = parsed.data
@@ -312,7 +312,7 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
         return
       }
       this.logger.error(error instanceof Error ? (error.stack ?? error.message) : String(error))
-      this.sendError(client, { code: 'INVALID_PAYLOAD', message: 'Algo deu errado. Tente de novo.' })
+      this.sendError(client, { code: 'INVALID_PAYLOAD', message: 'Something went wrong. Please try again.' })
     }
   }
 

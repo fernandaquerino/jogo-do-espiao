@@ -1,4 +1,4 @@
-import type { ErrorCode } from '@espiao/game-core'
+import type { ErrorCode } from '@spy-game/game-core'
 
 export class RoomError extends Error {
   readonly code: ErrorCode

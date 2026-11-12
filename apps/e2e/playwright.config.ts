@@ -23,7 +23,7 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
-      command: `pnpm --filter @espiao/web exec vite --port ${WEB_PORT} --strictPort`,
+      command: `pnpm --filter @spy-game/web exec vite --port ${WEB_PORT} --strictPort`,
       cwd: '../..',
       env: { VITE_SERVER_URL: `http://localhost:${SERVER_PORT}` },
       url: `http://localhost:${WEB_PORT}`,

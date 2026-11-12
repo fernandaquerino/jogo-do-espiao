@@ -1,5 +1,5 @@
 {
-  "name": "@espiao/web",
+  "name": "@spy-game/web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@espiao/game-core": "workspace:*",
+    "@spy-game/game-core": "workspace:*",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.18.5",

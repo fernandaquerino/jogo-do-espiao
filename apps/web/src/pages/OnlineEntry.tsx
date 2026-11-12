@@ -15,7 +15,7 @@ export function OnlineEntry() {
 
   useEffect(() => {
     if (state.roomCode && state.you) {
-      navigate(`/sala/${state.roomCode}`, { replace: true })
+      navigate(`/room/${state.roomCode}`, { replace: true })
     }
   }, [state.roomCode, state.you, navigate])
 
@@ -25,26 +25,26 @@ export function OnlineEntry() {
     <main className="screen setup-screen">
       <section className="hero-panel">
         <Link to="/" className="back-link">
-          ← Início
+          ← Home
         </Link>
-        <p className="eyebrow">Jogo em grupo</p>
-        <h1>Jogar online</h1>
-        <p className="lede">Crie uma sala e compartilhe o link, ou entre com o código de um amigo.</p>
+        <p className="eyebrow">Group game</p>
+        <h1>Play online</h1>
+        <p className="lede">Create a room and share the link, or join with a friend's code.</p>
       </section>
 
       <ConnectionBanner status={state.connection} onReconnect={() => client.reconnect()} />
 
       <JoinForm
-        title="Criar sala"
-        submitLabel="Criar sala"
+        title="Create room"
+        submitLabel="Create room"
         disabled={state.pending}
         error={null}
         onSubmit={(nickname) => client.create(nickname)}
       />
 
       <JoinForm
-        title="Entrar com código"
-        submitLabel="Entrar na sala"
+        title="Join with a code"
+        submitLabel="Join room"
         disabled={state.pending}
         error={error}
         fixedCode=""

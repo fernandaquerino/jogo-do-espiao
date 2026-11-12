@@ -1,192 +1,192 @@
 # Roadmap
 
-Itens planejados depois da Fase 1 (modo online). **Nenhum deles está implementado.** Cada um também está descrito como issue pronta em [docs/ISSUES.md](docs/ISSUES.md).
+Planned items after Phase 1 (online mode). **None of them is implemented.** Each one is also written as a ready-to-file issue in [docs/ISSUES.md](docs/ISSUES.md).
 
-| # | Item | Área |
+| # | Item | Area |
 |---|---|---|
-| 1 | [Fase de votação](#1-fase-de-votação) | game |
-| 2 | [Palpite do espião](#2-palpite-do-espião) | game |
-| 3 | [Pontuação entre rodadas](#3-pontuação-entre-rodadas) | game |
-| 4 | [Pacotes de lugares](#4-pacotes-de-lugares) | content |
-| 5 | [Papéis por lugar](#5-papéis-por-lugar) | game |
-| 6 | [RoomStore com Redis](#6-roomstore-com-redis) | infra |
-| 7 | [Modo espectador para TV](#7-modo-espectador-para-tv) | feature |
-| 8 | [Sons e vibração](#8-sons-e-vibração) | polish |
-| 9 | [PWA instalável](#9-pwa-instalável) | platform |
-| 10 | [Revisão de acessibilidade](#10-revisão-de-acessibilidade) | a11y |
-| 11 | [Versão em inglês (i18n)](#11-versão-em-inglês--i18n) | platform |
-| 12 | [Métricas anônimas de uso](#12-métricas-anônimas-de-uso) | infra |
-| 13 | [Teste de carga com 200 salas](#13-teste-de-carga-com-200-salas) | infra |
+| 1 | [Voting phase](#1-voting-phase) | game |
+| 2 | [Spy guess](#2-spy-guess) | game |
+| 3 | [Scoring across rounds](#3-scoring-across-rounds) | game |
+| 4 | [Location packs](#4-location-packs) | content |
+| 5 | [Roles per location](#5-roles-per-location) | game |
+| 6 | [Redis RoomStore](#6-redis-roomstore) | infra |
+| 7 | [TV spectator mode](#7-tv-spectator-mode) | feature |
+| 8 | [Sounds and haptics](#8-sounds-and-haptics) | polish |
+| 9 | [Installable PWA](#9-installable-pwa) | platform |
+| 10 | [Accessibility pass](#10-accessibility-pass) | a11y |
+| 11 | [Multiple languages (i18n)](#11-multiple-languages-i18n) | platform |
+| 12 | [Anonymous usage metrics](#12-anonymous-usage-metrics) | infra |
+| 13 | [Load test with 200 rooms](#13-load-test-with-200-rooms) | infra |
 
-## 1. Fase de votação
+## 1. Voting phase
 
-**Problema.** Hoje a rodada só termina pelo tempo ou quando o anfitrião encerra. Não há como o grupo decidir formalmente quem é o espião.
+**Problem.** Today a round only ends when the timer runs out or the host ends it. The group has no way to formally decide who the spy is.
 
-**Escopo.** Fase `voting` iniciada pelo anfitrião ou por maioria. Cada jogador vota em um suspeito (pode mudar até o fim). Quando a maioria absoluta aponta o mesmo jogador, a rodada termina; se não houver maioria até o tempo de votação acabar, a rodada termina sem acusado. O servidor valida e conta os votos; ninguém vê votos individuais até o fim.
+**Scope.** A `voting` phase started by the host or by majority. Each player votes for a suspect (and may change the vote until the end). When an absolute majority points at the same player the round ends; if there is no majority before the voting time runs out, the round ends with no accused. The server validates and counts votes; nobody sees individual votes until the end.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Só jogadores da sala votam, um voto ativo por jogador, não é possível votar em si mesmo.
-- Maioria absoluta encerra a rodada e `round:ended` informa o acusado e se era espião.
-- Votos individuais não são enviados antes do fim da votação.
-- Testes de serviço (maioria, empate, troca de voto, saída de jogador durante a votação) e de gateway.
-- Tela de votação mobile com alvos de toque grandes.
+- Only players in the room vote, one active vote per player, voting for yourself is not possible.
+- An absolute majority ends the round and `round:ended` reports the accused and whether they were a spy.
+- Individual votes are not sent before voting ends.
+- Service tests (majority, tie, vote change, a player leaving during the vote) and gateway tests.
+- A mobile voting screen with large tap targets.
 
-## 2. Palpite do espião
+## 2. Spy guess
 
-**Problema.** Na regra original o espião pode parar o relógio e tentar adivinhar o lugar; aqui ele só espera.
+**Problem.** In the original rules the spy can stop the clock and try to guess the location; here the spy can only wait.
 
-**Escopo.** Evento `round:guess { location }` enviado só pelo espião. O servidor pausa o relógio, compara o palpite com o lugar (ignorando maiúsculas e acentos) e encerra a rodada com vitória do espião ou dos demais. A lista de lugares possíveis é enviada ao espião durante a rodada.
+**Scope.** A `round:guess { location }` event sent only by the spy. The server pauses the clock, compares the guess with the location (ignoring case and accents) and ends the round with a spy win or a group win. The list of possible locations is sent to the spy during the round.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Apenas espiões podem palpitar; não espiões recebem `NOT_SPY`.
-- Palpite certo encerra a rodada com vitória do espião; errado, com vitória do grupo.
-- O relógio de todos para no momento do palpite.
-- A lista de lugares chega só ao espião.
-- Testes de serviço e de gateway cobrindo os dois resultados.
+- Only spies can guess; everyone else gets `NOT_SPY`.
+- A correct guess ends the round with a spy win; a wrong one, with a group win.
+- Everyone's clock stops at the moment of the guess.
+- The list of locations reaches the spy only.
+- Service and gateway tests covering both outcomes.
 
-## 3. Pontuação entre rodadas
+## 3. Scoring across rounds
 
-**Problema.** Cada rodada é isolada; não há placar para jogar várias seguidas.
+**Problem.** Every round is isolated; there is no scoreboard for playing several in a row.
 
-**Escopo.** Placar por sala, mantido em memória, com pontos no estilo Spyfall (espião que escapa ou acerta o lugar, grupo que acusa corretamente, bônus ao acusador). Placar exibido no resultado e no lobby; botão para zerar. Depende de voto e palpite para ter vitórias bem definidas.
+**Scope.** A per-room scoreboard kept in memory, with Spyfall-style points (a spy who escapes or guesses the location, a group that accuses correctly, a bonus for the accuser). The scoreboard is shown on the result screen and in the lobby, with a reset button. It depends on voting and guessing to have well-defined winners.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Pontos calculados no servidor e documentados no README.
-- O placar sobrevive a reconexões e some quando a sala expira.
-- Jogador que sai perde sua linha; quem entra começa com zero.
-- Testes de cálculo de pontos para cada resultado possível.
+- Points are computed on the server and documented in the README.
+- The scoreboard survives reconnections and disappears when the room expires.
+- A player who leaves loses their row; a newcomer starts at zero.
+- Point calculation tests for every possible outcome.
 
-## 4. Pacotes de lugares
+## 4. Location packs
 
-**Problema.** Existe uma lista única de 41 lugares; grupos diferentes (crianças, trabalho, viagem) querem temas diferentes.
+**Problem.** There is a single list of 41 locations; different groups (kids, work, travel) want different themes.
 
-**Escopo.** Dividir os lugares em pacotes (viagem, trabalho, infantil, além do básico) em `game-core`, cada lugar com `packId`. O anfitrião escolhe pacotes no lobby; os lugares personalizados continuam valendo. Mínimo de lugares para iniciar.
+**Scope.** Split the locations into packs (travel, work, kids, plus the basics) in `game-core`, each location with a `packId`. The host chooses packs in the lobby; custom locations still apply. A minimum number of locations is required to start.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Pelo menos 3 pacotes novos com 15 lugares cada, todos com dica.
-- O anfitrião ativa e desativa pacotes; ao menos um pacote ou lugar personalizado precisa estar ativo.
-- O sorteio só considera lugares dos pacotes ativos.
-- O modo local também permite escolher pacotes.
-- Testes de `game-core` para filtro por pacote e validação.
+- At least 3 new packs with 15 locations each, all with hints.
+- The host turns packs on and off; at least one pack or custom location must stay active.
+- The draw only considers locations from active packs.
+- Local mode can also choose packs.
+- `game-core` tests for pack filtering and validation.
 
-## 5. Papéis por lugar
+## 5. Roles per location
 
-**Problema.** Todos os não espiões são iguais, o que facilita para o espião se esconder em respostas genéricas.
+**Problem.** All non-spies are identical, which makes it easy for the spy to hide behind generic answers.
 
-**Escopo.** Cada lugar ganha uma lista opcional de papéis (por exemplo, Cinema: pipoqueiro, projecionista, bilheteira). O servidor sorteia um papel por jogador e o envia no `round:role` privado, sem repetir enquanto houver papéis livres.
+**Scope.** Each location gets an optional list of roles (for example, Movie theater: popcorn seller, projectionist, ticket clerk). The server draws one role per player and sends it in the private `round:role`, without repeats while free roles remain.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Pelo menos 10 lugares com 5 papéis ou mais.
-- `round:role` inclui `characterRole` apenas para o dono.
-- Lugares sem papéis continuam funcionando como hoje.
-- Teste garantindo que papéis não vazam em `room:state` nem em `round:ended` antes do fim.
+- At least 10 locations with 5 or more roles.
+- `round:role` includes `characterRole` for its owner only.
+- Locations without roles keep working as today.
+- A test ensuring roles leak neither in `room:state` nor in `round:ended` before the end.
 
-## 6. RoomStore com Redis
+## 6. Redis RoomStore
 
-**Problema.** O estado fica na memória de um único processo: um reinício apaga todas as salas e não dá para rodar duas instâncias.
+**Problem.** State lives in the memory of a single process: a restart wipes every room and two instances cannot run side by side.
 
-**Escopo.** Adaptador `RedisRoomStore` atrás da interface `RoomStore`, que hoje é síncrona e precisará ficar assíncrona. Timers (rodada, tolerância de reconexão, expiração) passam a depender de TTLs ou de um agendador compartilhado, e os eventos passam por pub/sub do adaptador Socket.IO para Redis.
+**Scope.** A `RedisRoomStore` adapter behind the `RoomStore` interface, which is synchronous today and will need to become asynchronous. Timers (round, reconnection grace, expiry) move to TTLs or a shared scheduler, and events go through the Socket.IO Redis adapter's pub/sub.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- `RoomStore` assíncrona, com a implementação em memória ainda disponível.
-- Duas instâncias do servidor atendem a mesma sala sem perder eventos.
-- Reiniciar uma instância não encerra salas ativas nem rodadas em andamento.
-- Variável `REDIS_URL` documentada; sem ela, usa memória.
-- Testes de integração rodando contra um Redis de teste.
+- `RoomStore` becomes asynchronous, with the in-memory implementation still available.
+- Two server instances serve the same room without losing events.
+- Restarting one instance does not end active rooms or rounds in progress.
+- A documented `REDIS_URL` variable; without it, memory is used.
+- Integration tests running against a test Redis.
 
-## 7. Modo espectador para TV
+## 7. TV spectator mode
 
-**Problema.** Em uma sala com TV, ninguém quer abrir o celular só para ver o tempo e quem está na sala.
+**Problem.** In a room with a TV, nobody wants to open their phone just to see the timer and who is in the room.
 
-**Escopo.** Rota `/tv/:code` que entra como espectador (sem assento, sem apelido), mostra o código, a lista de jogadores, o cronômetro e o resultado, e nunca recebe papéis. Espectadores não contam como jogadores.
+**Scope.** A `/tv/:code` route that joins as a spectator (no seat, no nickname) and shows the code, the player list, the timer and the result, and never receives roles. Spectators do not count as players.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Espectador não aparece na lista de jogadores nem entra na contagem do limite.
-- O servidor nunca envia `round:role` a espectadores; teste automatizado prova isso.
-- Tela legível a 3 metros (fonte grande, alto contraste).
-- Espectador reconecta sozinho.
+- A spectator does not appear in the player list nor count toward the limit.
+- The server never sends `round:role` to spectators; an automated test proves it.
+- A screen readable from 3 meters (large font, high contrast).
+- The spectator reconnects by itself.
 
-## 8. Sons e vibração
+## 8. Sounds and haptics
 
-**Problema.** Só há um alarme ao fim do tempo; a revelação do papel é silenciosa.
+**Problem.** There is only an alarm at the end of the time; revealing the role is silent.
 
-**Escopo.** Som curto e vibração (quando suportada) ao revelar o papel e ao fim do tempo, com botão de mudo lembrado no navegador. Respeitar `prefers-reduced-motion` e não tocar som automaticamente antes de uma interação do usuário.
+**Scope.** A short sound and vibration (where supported) when revealing the role and when time ends, with a mute toggle remembered in the browser. Respect `prefers-reduced-motion` and never play sound automatically before a user interaction.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Botão de mudo visível nas telas online e local, estado salvo em `localStorage`.
-- Com mudo ativo não há som nem vibração.
-- Vibração ignorada em aparelhos sem suporte, sem erros no console.
-- Funciona no iOS Safari e no Chrome Android.
+- A visible mute button on the online and local screens, state saved in `localStorage`.
+- With mute on there is no sound and no vibration.
+- Vibration is ignored on devices without support, with no console errors.
+- Works on iOS Safari and Chrome for Android.
 
-## 9. PWA instalável
+## 9. Installable PWA
 
-**Problema.** O modo local não precisa de internet, mas hoje exige abrir o site com conexão.
+**Problem.** Local mode needs no internet, but today the site must be opened with a connection.
 
-**Escopo.** Manifesto, ícones e service worker que guardam o aplicativo para uso offline. O modo local funciona sem rede; o modo online mostra aviso claro quando não há conexão.
+**Scope.** A manifest, icons and a service worker that cache the app for offline use. Local mode works without a network; online mode shows a clear notice when there is no connection.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- O Lighthouse reconhece o app como instalável.
-- Com o aparelho offline, `/` e `/local` abrem e um jogo local completo é possível.
-- Novas versões atualizam o cache sem prender o usuário em versão antiga.
-- Ícones em tamanhos maiores e maskable.
+- Lighthouse recognizes the app as installable.
+- With the device offline, `/` and `/local` open and a full local game is possible.
+- New versions update the cache without trapping the user on an old version.
+- Larger and maskable icons.
 
-## 10. Revisão de acessibilidade
+## 10. Accessibility pass
 
-**Problema.** Os fluxos foram feitos com rótulos e foco básicos, mas nunca foram testados com leitor de tela.
+**Problem.** The flows were built with basic labels and focus handling, but were never tested with a screen reader.
 
-**Escopo.** Auditar o fluxo de revelação, o lobby e o resultado com VoiceOver (iOS) e TalkBack (Android). Corrigir ordem de foco, anúncios de mudança de estado (`aria-live`), contraste e tamanhos de alvo; adicionar verificação automática (axe) ao E2E.
+**Scope.** Audit the reveal flow, the lobby and the result with VoiceOver (iOS) and TalkBack (Android). Fix focus order, state-change announcements (`aria-live`), contrast and target sizes; add an automated check (axe) to the E2E suite.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Um jogador cego consegue criar sala, entrar, ver o papel e terminar uma rodada só com leitor de tela.
-- O papel revelado é anunciado uma vez e some do leitor ao ocultar.
-- Sem violações críticas do axe nas telas principais.
-- Relatório curto com o que foi testado e em quais aparelhos.
+- A blind player can create a room, join, see their role and finish a round using only a screen reader.
+- The revealed role is announced once and disappears from the reader when hidden.
+- No critical axe violations on the main screens.
+- A short report of what was tested and on which devices.
 
-## 11. Versão em inglês (i18n)
+## 11. Multiple languages (i18n)
 
-**Problema.** Todo o texto está fixo em português, inclusive as mensagens de erro do servidor.
+**Problem.** All text is hardcoded in a single language, including the server's error messages.
 
-**Escopo.** Biblioteca de i18n no web, com `pt-BR` e `en`. O servidor passa a enviar apenas códigos de erro e o web os traduz. Lugares e dicas ganham versão em inglês. Idioma escolhido no navegador, com seletor.
+**Scope.** An i18n library in the web app, starting with `en` and adding `pt-BR`. The server sends only error codes and the web app translates them. Locations and hints get translated versions. The language is picked from the browser, with a selector.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Nenhum texto fixo em português nos componentes.
-- Mensagens de erro do servidor traduzidas no cliente a partir de `code`.
-- O idioma da sala define a lista de lugares sorteada.
-- Testes cobrindo a troca de idioma.
+- No hardcoded text in components.
+- Server error messages are translated on the client from `code`.
+- The room language decides which list of locations is drawn.
+- Tests covering a language switch.
 
-## 12. Métricas anônimas de uso
+## 12. Anonymous usage metrics
 
-**Problema.** Não há como saber se o jogo está sendo usado nem se as salas chegam ao fim das rodadas.
+**Problem.** There is no way to know whether the game is being used or whether rooms finish their rounds.
 
-**Escopo.** Contadores agregados no servidor (salas criadas, rodadas iniciadas e concluídas, jogadores por sala) expostos em `/metrics` protegido por token. Sem apelidos, sem códigos de sala, sem IP e sem identificadores de sessão.
+**Scope.** Aggregate counters on the server (rooms created, rounds started and finished, players per room) exposed at a token-protected `/metrics`. No nicknames, no room codes, no IPs and no session identifiers.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Nenhum dado de jogador ou de sala aparece nas métricas, verificado por teste.
-- Os contadores sobrevivem apenas enquanto o processo vive, ou ficam no Redis se o item 6 existir.
-- `/metrics` exige token definido por variável de ambiente.
-- Política de privacidade curta no README.
+- No player or room data appears in the metrics, verified by a test.
+- Counters only live as long as the process, or sit in Redis if item 6 exists.
+- `/metrics` requires a token set through an environment variable.
+- A short privacy note in the README.
 
-## 13. Teste de carga com 200 salas
+## 13. Load test with 200 rooms
 
-**Problema.** Não se sabe quantas salas simultâneas uma instância aguenta nem quanto o servidor gasta de memória e CPU.
+**Problem.** It is unknown how many simultaneous rooms one instance can handle or how much memory and CPU the server uses.
 
-**Escopo.** Script de carga (por exemplo com `socket.io-client` ou k6) que abre 200 salas de 6 jogadores, roda rodadas completas e derruba/reconecta alguns jogadores. Medir latência de eventos, memória e CPU, e registrar o resultado.
+**Scope.** A load script (for example with `socket.io-client` or k6) that opens 200 rooms of 6 players, plays full rounds and drops/reconnects some players. Measure event latency, memory and CPU, and record the result.
 
-**Critérios de aceite.**
+**Acceptance criteria.**
 
-- Script versionado, com instruções de uso.
-- 200 salas simultâneas rodando por 10 minutos sem erros nem vazamento de memória visível.
-- p95 de entrega de `round:started` abaixo de 500 ms.
-- Resultados e limites recomendados documentados no README.
+- A versioned script with usage instructions.
+- 200 simultaneous rooms running for 10 minutes with no errors and no visible memory leak.
+- p95 delivery of `round:started` below 500 ms.
+- Results and recommended limits documented in the README.

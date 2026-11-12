@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MAX_NICKNAME_LENGTH } from '@espiao/game-core'
+import { MAX_NICKNAME_LENGTH } from '@spy-game/game-core'
 import { loadNickname, saveNickname } from '../nickname'
 
 type JoinFormProps = {
@@ -38,7 +38,7 @@ export function JoinForm({ title, submitLabel, disabled, error, fixedCode, onSub
 
       <div className="form-grid">
         <label className="field">
-          <span>Seu apelido</span>
+          <span>Your nickname</span>
           <input
             type="text"
             autoComplete="nickname"
@@ -49,7 +49,7 @@ export function JoinForm({ title, submitLabel, disabled, error, fixedCode, onSub
         </label>
         {!needsCode ? null : (
           <label className="field">
-            <span>Código da sala</span>
+            <span>Room code</span>
             <input
               type="text"
               autoCapitalize="characters"
