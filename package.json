@@ -16,6 +16,7 @@
     "typecheck": "pnpm build:core && pnpm -r --if-present typecheck",
     "test": "pnpm build:core && pnpm -r --if-present test",
     "build": "pnpm -r --if-present build",
+    "test:e2e": "pnpm build && pnpm --filter @espiao/e2e test:e2e",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
