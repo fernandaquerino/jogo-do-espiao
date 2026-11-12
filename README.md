@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# Jogo do Espião
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Jogo de festa no estilo Spyfall, em português do Brasil. Todos menos o(s) espião(ões) descobrem um
+lugar secreto; os jogadores se fazem perguntas, o espião tenta adivinhar o lugar e os demais tentam
+descobrir quem é o espião antes do tempo acabar.
 
-Currently, two official plugins are available:
+> Status: em desenvolvimento. O modo local (um celular passado de mão em mão) funciona; o modo online
+> está sendo construído. Veja [docs/SPEC.md](docs/SPEC.md).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Para quem é
 
-## React Compiler
+Grupos de amigos e família jogando na mesma sala ou em videochamada.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Como jogar
 
-## Expanding the ESLint configuration
+_(em breve: seção completa)_
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+React 19 + Vite + TypeScript, pnpm workspaces. Em construção: NestJS + Socket.IO (servidor).
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Rodando localmente
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Requisitos: Node.js 24 LTS (22+ funciona) e pnpm.
+
+```bash
+pnpm install
+pnpm dev:web
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Testes
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
 ```
+
+## Licença
+
+[MIT](LICENSE)
