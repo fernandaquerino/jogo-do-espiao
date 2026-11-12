@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SETTINGS, MAX_PLAYERS } from '@espiao/game-core'
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from './room-code.ts'
 import { RoomError } from './room.errors.ts'
-import { RoomService, toRoomState } from './room.service.ts'
+import { RECONNECT_GRACE_MS, ROOM_EXPIRY_MS, RoomService, toRoomState } from './room.service.ts'
 import type { RoomEvent } from './room.service.ts'
 import { InMemoryRoomStore } from './room-store.ts'
 
@@ -259,5 +259,137 @@ describe('RoomService: rounds', () => {
     expect(serialized).not.toContain(room.round!.location.name)
     expect(serialized).not.toContain('spyIds')
     expect(serialized).not.toContain('sessionToken')
+  })
+})
+
+describe('RoomService: reconnection, handover and expiry', () => {
+  let service: RoomService
+  let events: RoomEvent[]
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    service = new RoomService(new InMemoryRoomStore())
+    events = []
+    service.onEvent((event) => events.push(event))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function roomOf(count: number) {
+    const { room, player: host } = service.createRoom('Host')
+    const others = Array.from({ length: count - 1 }, (_, index) => service.joinRoom(room.code, `P${index + 1}`).player)
+    events.length = 0
+    return { room, host, others }
+  }
+
+  it('keeps the seat for 60 s and returns the same player on resume', () => {
+    const { room, others } = roomOf(3)
+    const player = others[0]!
+    service.disconnect(room.code, player.id)
+    expect(player.connected).toBe(false)
+    expect(events).toContainEqual({ type: 'state', roomCode: room.code })
+
+    vi.advanceTimersByTime(RECONNECT_GRACE_MS - 1)
+    const seat = service.resume(room.code, player.sessionToken)
+    expect(seat.player.id).toBe(player.id)
+    expect(seat.player.connected).toBe(true)
+
+    vi.advanceTimersByTime(5 * 60_000)
+    expect(room.players).toHaveLength(3)
+  })
+
+  it('gives the seat away after 60 s, and the old token stops working', () => {
+    const { room, others } = roomOf(3)
+    const player = others[0]!
+    service.disconnect(room.code, player.id)
+    vi.advanceTimersByTime(RECONNECT_GRACE_MS)
+    expect(room.players.map((p) => p.id)).not.toContain(player.id)
+    expect(codeOf(() => service.resume(room.code, player.sessionToken))).toBe('SESSION_INVALID')
+  })
+
+  it('restores the player\'s own role mid-round', () => {
+    const { room, host, others } = roomOf(4)
+    service.startRound(room.code, host.id)
+    const target = others[1]!
+    const before = service.roleFor(room, target.id)
+    service.disconnect(room.code, target.id)
+    vi.advanceTimersByTime(30_000)
+    const { player } = service.resume(room.code, target.sessionToken)
+    expect(service.roleFor(room, player.id)).toEqual(before)
+  })
+
+  it('rejects wrong tokens, tokens from other rooms and unknown rooms', () => {
+    const first = roomOf(3)
+    const second = service.createRoom('Other')
+    expect(codeOf(() => service.resume(first.room.code, 'nope'))).toBe('SESSION_INVALID')
+    expect(codeOf(() => service.resume(first.room.code, second.player.sessionToken))).toBe('SESSION_INVALID')
+    expect(codeOf(() => service.resume('ZZZZZZ', first.host.sessionToken))).toBe('ROOM_NOT_FOUND')
+  })
+
+  it('passes the host role on only after the host is gone for good', () => {
+    const { room, host, others } = roomOf(3)
+    service.disconnect(room.code, host.id)
+    vi.advanceTimersByTime(RECONNECT_GRACE_MS - 1)
+    expect(room.hostId).toBe(host.id)
+    vi.advanceTimersByTime(1)
+    expect(room.hostId).toBe(others[0]!.id)
+    expect(room.players).toHaveLength(2)
+  })
+
+  it('hands the host role to a connected player, skipping disconnected ones', () => {
+    const { room, host, others } = roomOf(3)
+    service.disconnect(room.code, others[0]!.id)
+    service.leave(room.code, host.id)
+    expect(room.hostId).toBe(others[1]!.id)
+  })
+
+  it('keeps seats while everyone is offline and deletes the room after 10 minutes', () => {
+    const { room, host, others } = roomOf(3)
+    for (const player of [host, ...others]) {
+      service.disconnect(room.code, player.id)
+    }
+
+    vi.advanceTimersByTime(ROOM_EXPIRY_MS - 1)
+    expect(room.players).toHaveLength(3)
+    expect(service.getRoom(room.code)).toBeDefined()
+    vi.advanceTimersByTime(1)
+    expect(service.getRoom(room.code)).toBeUndefined()
+  })
+
+  it('cancels expiry when someone comes back, then drops seats that stayed away', () => {
+    const { room, host, others } = roomOf(3)
+    for (const player of [host, ...others]) {
+      service.disconnect(room.code, player.id)
+    }
+
+    vi.advanceTimersByTime(5 * 60_000)
+    service.resume(room.code, host.sessionToken)
+    vi.advanceTimersByTime(ROOM_EXPIRY_MS)
+    expect(service.getRoom(room.code)).toBeDefined()
+    expect(room.players.map((p) => p.id)).toEqual([host.id])
+  })
+
+  it('stops the round timer when the room is deleted', () => {
+    const { room, host } = roomOf(3)
+    service.startRound(room.code, host.id)
+    for (const player of [...room.players]) {
+      service.leave(room.code, player.id)
+    }
+    expect(service.getRoom(room.code)).toBeUndefined()
+    events.length = 0
+    vi.advanceTimersByTime(60 * 60_000)
+    expect(events).toEqual([])
+  })
+
+  it('ignores a second disconnect and a disconnect of an unknown seat', () => {
+    const { room, others } = roomOf(3)
+    service.disconnect(room.code, others[0]!.id)
+    const count = events.length
+    service.disconnect(room.code, others[0]!.id)
+    service.disconnect(room.code, 'ghost')
+    service.disconnect('ZZZZZZ', 'ghost')
+    expect(events).toHaveLength(count)
   })
 })

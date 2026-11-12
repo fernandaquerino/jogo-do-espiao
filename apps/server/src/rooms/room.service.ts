@@ -16,7 +16,12 @@ import type {
   RoundSettings,
 } from '@espiao/game-core'
 import { RoomError } from './room.errors.ts'
-import { generateRoomCode, generateSessionToken, normalizeRoomCode } from './room-code.ts'
+import {
+  generateRoomCode,
+  generateSessionToken,
+  normalizeRoomCode,
+  tokensMatch,
+} from './room-code.ts'
 import { ROOM_STORE } from './room-store.ts'
 import type { RoomStore } from './room-store.ts'
 import type { PlayerRecord, Room } from './room.types.ts'
@@ -27,6 +32,11 @@ export type RoomEvent =
   | { type: 'roundStarted'; roomCode: string }
   | { type: 'roundEnded'; roomCode: string }
   | { type: 'removed'; roomCode: string; playerId: string; reason: 'kicked' | 'left' }
+
+/** How long a dropped player keeps their seat while other players are connected. */
+export const RECONNECT_GRACE_MS = 60_000
+/** How long a room with no connected players survives before it is deleted. */
+export const ROOM_EXPIRY_MS = 10 * 60_000
 
 export type RoomEventListener = (event: RoomEvent) => void
 
@@ -120,6 +130,51 @@ export class RoomService {
 
   getRoom(code: string): Room | undefined {
     return this.store.get(normalizeRoomCode(code))
+  }
+
+  /**
+   * Gives a seat back to a returning player. Throws ROOM_NOT_FOUND for an unknown or expired
+   * room and SESSION_INVALID when the token does not belong to a seat in that room.
+   */
+  resume(codeInput: string, sessionToken: string): Seat {
+    const room = this.requireRoom(codeInput)
+    const player = room.players.find((p) => tokensMatch(p.sessionToken, sessionToken))
+
+    if (!player) {
+      throw new RoomError('SESSION_INVALID', 'Sua vaga na sala expirou. Entre novamente.')
+    }
+
+    this.clearTimer(`grace:${room.code}:${player.id}`)
+    this.clearTimer(`expiry:${room.code}`)
+    player.connected = true
+    this.store.save(room)
+    this.emit({ type: 'state', roomCode: room.code })
+    return { room, player }
+  }
+
+  /**
+   * The player's socket dropped. They keep their seat for RECONNECT_GRACE_MS; if nobody is
+   * connected any more the room itself is kept for ROOM_EXPIRY_MS.
+   */
+  disconnect(roomCode: string, playerId: string): void {
+    const room = this.store.get(roomCode)
+    const player = room?.players.find((p) => p.id === playerId)
+
+    if (!room || !player || !player.connected) {
+      return
+    }
+
+    player.connected = false
+    this.store.save(room)
+    this.setTimer(`grace:${roomCode}:${playerId}`, RECONNECT_GRACE_MS, () =>
+      this.onGraceElapsed(roomCode, playerId),
+    )
+
+    if (!room.players.some((p) => p.connected)) {
+      this.setTimer(`expiry:${roomCode}`, ROOM_EXPIRY_MS, () => this.expireRoom(roomCode))
+    }
+
+    this.emit({ type: 'state', roomCode })
   }
 
   /** Removes a player right away (explicit leave). */
@@ -293,6 +348,7 @@ export class RoomService {
     }
 
     room.players = room.players.filter((p) => p.id !== playerId)
+    this.clearTimer(`grace:${roomCode}:${playerId}`)
 
     if (notifyPlayer) {
       this.emit({ type: 'removed', roomCode, playerId, reason })
@@ -310,6 +366,30 @@ export class RoomService {
 
     this.store.save(room)
     this.emit({ type: 'state', roomCode })
+  }
+
+  private onGraceElapsed(roomCode: string, playerId: string): void {
+    const room = this.store.get(roomCode)
+    const player = room?.players.find((p) => p.id === playerId)
+
+    if (!room || !player || player.connected) {
+      return
+    }
+
+    // With everyone offline (say, all phones asleep) seats are kept until the room expires.
+    if (!room.players.some((p) => p.connected)) {
+      this.setTimer(`grace:${roomCode}:${playerId}`, RECONNECT_GRACE_MS, () =>
+        this.onGraceElapsed(roomCode, playerId),
+      )
+      return
+    }
+
+    this.removePlayer(roomCode, playerId, 'left', false)
+  }
+
+  private expireRoom(roomCode: string): void {
+    this.clearRoomTimers(roomCode)
+    this.store.delete(roomCode)
   }
 
   private finishRound(roomCode: string): void {

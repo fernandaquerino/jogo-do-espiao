@@ -20,6 +20,7 @@ import {
   createSchema,
   joinSchema,
   kickSchema,
+  resumeSchema,
   updateSettingsSchema,
 } from './schemas.ts'
 
@@ -58,9 +59,13 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
       return
     }
 
-    // Step 3 behavior: a dropped socket leaves the room. Reconnection grace comes later.
+    // A replaced socket (the player already resumed elsewhere) must not drop the new session.
+    if (this.sockets.get(this.key(seat)) !== client) {
+      return
+    }
+
     this.sockets.delete(this.key(seat))
-    this.rooms.leave(seat.roomCode, seat.playerId)
+    this.rooms.disconnect(seat.roomCode, seat.playerId)
   }
 
   @SubscribeMessage(CLIENT_EVENTS.create)
@@ -76,6 +81,24 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
     this.guard(client, joinSchema, body, (data) => {
       this.requireNoSeat(client)
       this.enter(client, this.rooms.joinRoom(data.roomCode, data.nickname))
+    })
+  }
+
+  @SubscribeMessage(CLIENT_EVENTS.resume)
+  resume(@ConnectedSocket() client: Socket, @MessageBody() body: unknown): void {
+    this.guard(client, resumeSchema, body, (data) => {
+      this.requireNoSeat(client)
+      const seat = this.rooms.resume(data.roomCode, data.sessionToken)
+      const ref: SeatRef = { roomCode: seat.room.code, playerId: seat.player.id }
+      const previous = this.sockets.get(this.key(ref))
+
+      if (previous && previous !== client) {
+        this.detach(previous, ref)
+        previous.disconnect(true)
+      }
+
+      this.enter(client, seat)
+      this.sendCatchUp(client, seat)
     })
   }
 
@@ -144,6 +167,25 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
     }
     client.emit(SERVER_EVENTS.joined, joined)
     client.emit(SERVER_EVENTS.state, toRoomState(seat.room))
+  }
+
+  /** Brings a returning player up to date: their own role mid-round, or the result. */
+  private sendCatchUp(client: Socket, seat: Seat): void {
+    const { room, player } = seat
+    const role = this.rooms.roleFor(room, player.id)
+
+    if (role && room.round) {
+      client.emit(SERVER_EVENTS.roundRole, role)
+      client.emit(SERVER_EVENTS.roundStarted, {
+        firstAskerId: room.round.firstAskerId,
+        endsAt: room.round.endsAt,
+      })
+    }
+
+    const result = this.rooms.resultOf(room)
+    if (result) {
+      client.emit(SERVER_EVENTS.roundEnded, result)
+    }
   }
 
   private detach(client: Socket, seat: SeatRef): void {
