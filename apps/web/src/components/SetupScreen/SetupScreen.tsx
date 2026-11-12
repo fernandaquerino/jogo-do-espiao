@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
-import type { GameConfig, Location } from '../../types/game'
+import { Link } from 'react-router-dom'
+import type { GameConfig } from '../../types/game'
 import { getAvailableLocations, validateConfig } from '../../utils/game'
+import { CustomLocationsEditor, SettingsFields } from '../SettingsFields/SettingsFields'
 
 type SetupScreenProps = {
   config: GameConfig
@@ -8,17 +10,11 @@ type SetupScreenProps = {
   onStart: () => void
 }
 
-const TIME_OPTIONS = [3, 5, 8, 10, 15]
-
 export function SetupScreen({
   config,
   onConfigChange,
   onStart,
 }: SetupScreenProps) {
-  const [customLocation, setCustomLocation] = useState<Location>({
-    name: '',
-    hint: '',
-  })
   const [playersCountInput, setPlayersCountInput] = useState(
     String(config.playersCount),
   )
@@ -86,31 +82,12 @@ export function SetupScreen({
     updateConfig({ playerNames })
   }
 
-  function addCustomLocation() {
-    const name = customLocation.name.trim()
-    const hint = customLocation.hint.trim()
-
-    if (!name || !hint) {
-      return
-    }
-
-    updateConfig({
-      customLocations: [...config.customLocations, { name, hint }],
-    })
-    setCustomLocation({ name: '', hint: '' })
-  }
-
-  function removeCustomLocation(name: string) {
-    updateConfig({
-      customLocations: config.customLocations.filter(
-        (location) => location.name !== name,
-      ),
-    })
-  }
-
   return (
     <main className="screen setup-screen">
       <section className="hero-panel">
+        <Link to="/" className="back-link">
+          ← Início
+        </Link>
         <p className="eyebrow">Jogo em grupo</p>
         <h1>Espião</h1>
         <p className="lede">
@@ -128,68 +105,24 @@ export function SetupScreen({
           <span className="pill">{locationsCount} lugares</span>
         </div>
 
-        <div className="form-grid">
-          <label className="field">
-            <span>Jogadores</span>
-            <input
-              type="number"
-              min="3"
-              max="20"
-              value={playersCountInput}
-              onBlur={commitPlayersCountInput}
-              onChange={(event) => handlePlayersCountChange(event.target.value)}
-            />
-          </label>
-
-          <label className="field">
-            <span>Espiões</span>
-            <input
-              type="number"
-              min="1"
-              max={config.playersCount - 1}
-              value={config.spiesCount}
-              onChange={(event) =>
-                updateConfig({ spiesCount: Number(event.target.value) })
-              }
-            />
-          </label>
-
-          <label className="field">
-            <span>Tempo em minutos</span>
-            <input
-              type="number"
-              min="1"
-              value={config.durationInMinutes}
-              onChange={(event) =>
-                updateConfig({ durationInMinutes: Number(event.target.value) })
-              }
-            />
-          </label>
-
-          <label className="toggle-field">
-            <input
-              type="checkbox"
-              checked={config.spyGetsHint}
-              onChange={(event) =>
-                updateConfig({ spyGetsHint: event.target.checked })
-              }
-            />
-            <span>Espião recebe dica?</span>
-          </label>
-        </div>
-
-        <div className="segmented-control" aria-label="Tempos sugeridos">
-          {TIME_OPTIONS.map((minutes) => (
-            <button
-              type="button"
-              className={minutes === config.durationInMinutes ? 'active' : ''}
-              onClick={() => updateConfig({ durationInMinutes: minutes })}
-              key={minutes}
-            >
-              {minutes} min
-            </button>
-          ))}
-        </div>
+        <SettingsFields
+          settings={config}
+          playersCount={config.playersCount}
+          onChange={updateConfig}
+          leading={
+            <label className="field">
+              <span>Jogadores</span>
+              <input
+                type="number"
+                min="3"
+                max="20"
+                value={playersCountInput}
+                onBlur={commitPlayersCountInput}
+                onChange={(event) => handlePlayersCountChange(event.target.value)}
+              />
+            </label>
+          }
+        />
 
         {error ? <p className="error-message">{error}</p> : null}
       </section>
@@ -222,54 +155,10 @@ export function SetupScreen({
             <h2>Lugares customizados</h2>
           </div>
         </div>
-        <div className="custom-location-form">
-          <label className="field">
-            <span>Lugar</span>
-            <input
-              type="text"
-              value={customLocation.name}
-              onChange={(event) =>
-                setCustomLocation({
-                  ...customLocation,
-                  name: event.target.value,
-                })
-              }
-              placeholder="Ex.: Cafeteria"
-            />
-          </label>
-          <label className="field">
-            <span>Dica</span>
-            <input
-              type="text"
-              value={customLocation.hint}
-              onChange={(event) =>
-                setCustomLocation({
-                  ...customLocation,
-                  hint: event.target.value,
-                })
-              }
-              placeholder="Ex.: lugar com balcão, xícaras e aroma de café"
-            />
-          </label>
-          <button type="button" className="secondary-button" onClick={addCustomLocation}>
-            Adicionar
-          </button>
-        </div>
-
-        {config.customLocations.length > 0 ? (
-          <div className="chips-list">
-            {config.customLocations.map((location) => (
-              <button
-                type="button"
-                className="chip"
-                onClick={() => removeCustomLocation(location.name)}
-                key={location.name}
-              >
-                {location.name} remover
-              </button>
-            ))}
-          </div>
-        ) : null}
+        <CustomLocationsEditor
+          locations={config.customLocations}
+          onChange={(customLocations) => updateConfig({ customLocations })}
+        />
       </section>
 
       <button

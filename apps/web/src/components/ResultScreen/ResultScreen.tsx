@@ -1,15 +1,23 @@
+import type { ReactNode } from 'react'
 import type { GameRound } from '../../types/game'
 
 type ResultScreenProps = {
   round: GameRound
-  onPlayAgain: () => void
-  onNewConfig: () => void
+  /** A button is only shown when its handler is given (online, only the host has them). */
+  onPlayAgain?: () => void
+  onNewConfig?: () => void
+  playAgainLabel?: string
+  newConfigLabel?: string
+  footer?: ReactNode
 }
 
 export function ResultScreen({
   round,
   onPlayAgain,
   onNewConfig,
+  playAgainLabel = 'Jogar novamente',
+  newConfigLabel = 'Nova configuração',
+  footer,
 }: ResultScreenProps) {
   const spies = round.players.filter((player) => player.role === 'spy')
   const hintText = round.location.hint || 'Dica não cadastrada'
@@ -41,13 +49,18 @@ export function ResultScreen({
       </section>
 
       <div className="actions">
-        <button type="button" className="primary-button" onClick={onPlayAgain}>
-          Jogar novamente
-        </button>
-        <button type="button" className="secondary-button" onClick={onNewConfig}>
-          Nova configuração
-        </button>
+        {onPlayAgain ? (
+          <button type="button" className="primary-button" onClick={onPlayAgain}>
+            {playAgainLabel}
+          </button>
+        ) : null}
+        {onNewConfig ? (
+          <button type="button" className="secondary-button" onClick={onNewConfig}>
+            {newConfigLabel}
+          </button>
+        ) : null}
       </div>
+      {footer}
     </main>
   )
 }

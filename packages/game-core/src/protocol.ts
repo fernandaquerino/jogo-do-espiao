@@ -38,7 +38,8 @@ export type RoomStatePayload = {
   settings: RoundSettings
   phase: RoomPhase
 }
-export type RoundStartedPayload = { firstAskerId: string; endsAt: number }
+/** `serverNow` lets clients correct for a wrong device clock when showing the countdown. */
+export type RoundStartedPayload = { firstAskerId: string; endsAt: number; serverNow: number }
 /** Sent only to the player it describes. */
 export type RoundRolePayload = { role: PlayerRole; location?: string; hint?: string }
 export type RoundEndedPayload = { location: Location; spyIds: string[] }

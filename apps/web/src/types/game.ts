@@ -11,8 +11,10 @@ export type GameConfig = {
   customLocations: Location[]
 }
 
+export type PlayerId = number | string
+
 export type Player = {
-  id: number
+  id: PlayerId
   name: string
   role: PlayerRole
 }
@@ -22,5 +24,5 @@ export type GameStep = 'setup' | 'reveal' | 'playing' | 'result'
 export type GameRound = {
   location: Location
   players: Player[]
-  firstAskerId: number
+  firstAskerId: PlayerId
 }

@@ -179,6 +179,7 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
       client.emit(SERVER_EVENTS.roundStarted, {
         firstAskerId: room.round.firstAskerId,
         endsAt: room.round.endsAt,
+        serverNow: Date.now(),
       })
     }
 
@@ -246,6 +247,7 @@ export class RoomGateway implements OnGatewayDisconnect, OnModuleInit, OnModuleD
     this.server.to(roomCode).emit(SERVER_EVENTS.roundStarted, {
       firstAskerId: room.round.firstAskerId,
       endsAt: room.round.endsAt,
+      serverNow: Date.now(),
     })
   }
 

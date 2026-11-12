@@ -1,64 +1,25 @@
-import { useEffect, useState } from 'react'
-import { GameScreen } from './components/GameScreen/GameScreen'
-import { ResultScreen } from './components/ResultScreen/ResultScreen'
-import { RevealScreen } from './components/RevealScreen/RevealScreen'
-import { SetupScreen } from './components/SetupScreen/SetupScreen'
-import type { GameConfig, GameRound, GameStep } from './types/game'
-import { createRound, loadSavedConfig, saveConfig } from './utils/game'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { RoomClientProvider } from './online/RoomClientContext'
+import { Home } from './pages/Home'
+import { LocalGame } from './pages/LocalGame'
+import { OnlineEntry } from './pages/OnlineEntry'
+import { RoomPage } from './pages/RoomPage'
 import './App.css'
 
 function App() {
-  const [step, setStep] = useState<GameStep>('setup')
-  const [config, setConfig] = useState<GameConfig>(() => loadSavedConfig())
-  const [round, setRound] = useState<GameRound | null>(null)
-
-  useEffect(() => {
-    saveConfig(config)
-  }, [config])
-
-  function startNewRound() {
-    setRound(createRound(config))
-    setStep('reveal')
-  }
-
-  function returnToSetup() {
-    setRound(null)
-    setStep('setup')
-  }
-
   return (
     <div className="app-shell">
-      {step === 'setup' ? (
-        <SetupScreen
-          config={config}
-          onConfigChange={setConfig}
-          onStart={startNewRound}
-        />
-      ) : null}
-
-      {step === 'reveal' && round ? (
-        <RevealScreen
-          config={config}
-          round={round}
-          onStartRound={() => setStep('playing')}
-        />
-      ) : null}
-
-      {step === 'playing' && round ? (
-        <GameScreen
-          config={config}
-          round={round}
-          onFinishRound={() => setStep('result')}
-        />
-      ) : null}
-
-      {step === 'result' && round ? (
-        <ResultScreen
-          round={round}
-          onPlayAgain={startNewRound}
-          onNewConfig={returnToSetup}
-        />
-      ) : null}
+      <BrowserRouter>
+        <RoomClientProvider>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/local" element={<LocalGame />} />
+            <Route path="/online" element={<OnlineEntry />} />
+            <Route path="/sala/:code" element={<RoomPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </RoomClientProvider>
+      </BrowserRouter>
     </div>
   )
 }
