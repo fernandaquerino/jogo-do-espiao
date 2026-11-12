@@ -1,0 +1,13 @@
+# Render blueprint for the game server. The web app goes to Vercel (see README).
+services:
+  - type: web
+    name: espiao-server
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # Rooms live in memory: keep a single always-on instance (free instances sleep and lose rooms).
+    plan: starter
+    numInstances: 1
+    healthCheckPath: /health
+    envVars:
+      - key: CORS_ORIGIN
+        sync: false # set to the Vercel URL, e.g. https://espiao.vercel.app

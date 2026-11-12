@@ -1,0 +1,6 @@
+**/node_modules
+**/dist
+.git
+.env*
+apps/web
+apps/e2e
