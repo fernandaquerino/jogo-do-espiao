@@ -1,6 +1,5 @@
-import { LOCATIONS } from '../data/locations'
+import { createRound as drawRound, getAvailableLocations as listLocations, validateSettings } from '@espiao/game-core'
 import type { GameConfig, GameRound, Location, Player } from '../types/game'
-import { shuffle } from './shuffle'
 
 export const DEFAULT_CONFIG: GameConfig = {
   playersCount: 5,
@@ -12,27 +11,7 @@ export const DEFAULT_CONFIG: GameConfig = {
 }
 
 export function validateConfig(config: GameConfig): string | null {
-  if (config.playersCount < 3) {
-    return 'O jogo precisa de pelo menos 3 jogadores.'
-  }
-
-  if (config.playersCount > 20) {
-    return 'O limite é de 20 jogadores.'
-  }
-
-  if (config.spiesCount < 1) {
-    return 'Escolha pelo menos 1 espião.'
-  }
-
-  if (config.spiesCount >= config.playersCount) {
-    return 'A quantidade de espiões deve ser menor que a de jogadores.'
-  }
-
-  if (config.durationInMinutes < 1) {
-    return 'O tempo de jogo precisa ser de pelo menos 1 minuto.'
-  }
-
-  return null
+  return validateSettings(config, config.playersCount)?.message ?? null
 }
 
 export function buildPlayerNames(count: number, currentNames: string[]): string[] {
@@ -43,22 +22,19 @@ export function buildPlayerNames(count: number, currentNames: string[]): string[
 }
 
 export function getAvailableLocations(config: GameConfig): Location[] {
-  return [...LOCATIONS, ...config.customLocations]
+  return listLocations(config)
 }
 
 export function createRound(config: GameConfig): GameRound {
-  const locations = getAvailableLocations(config)
-  const location = locations[Math.floor(Math.random() * locations.length)]
   const playerIds = Array.from({ length: config.playersCount }, (_, index) => index + 1)
-  const shuffledPlayerIds = shuffle(playerIds)
-  const spyIds = new Set(shuffledPlayerIds.slice(0, config.spiesCount))
-  const firstAskerId = shuffledPlayerIds[config.spiesCount] ?? shuffledPlayerIds[0]
+  const { location, spyIds, firstAskerId } = drawRound(playerIds, config)
+  const spies = new Set(spyIds)
   const playerNames = buildPlayerNames(config.playersCount, config.playerNames)
 
   const players: Player[] = playerNames.map((name, index) => ({
     id: index + 1,
     name,
-    role: spyIds.has(index + 1) ? 'spy' : 'player',
+    role: spies.has(index + 1) ? 'spy' : 'player',
   }))
 
   return { location, players, firstAskerId }

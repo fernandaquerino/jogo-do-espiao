@@ -1,4 +1,4 @@
-import type { Location } from "../types/game";
+import type { Location } from "./types.ts";
 
 export const LOCATIONS: Location[] = [
   { name: "Cinema", hint: "Lugar com sessões, ingressos e pipoca" },

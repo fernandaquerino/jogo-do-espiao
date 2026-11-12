@@ -1,3 +1,7 @@
+import type { Location, PlayerRole } from '@espiao/game-core'
+
+export type { Location, PlayerRole }
+
 export type GameConfig = {
   playersCount: number
   spiesCount: number
@@ -7,17 +11,10 @@ export type GameConfig = {
   customLocations: Location[]
 }
 
-export type PlayerRole = 'player' | 'spy'
-
 export type Player = {
   id: number
   name: string
   role: PlayerRole
-}
-
-export type Location = {
-  name: string
-  hint: string
 }
 
 export type GameStep = 'setup' | 'reveal' | 'playing' | 'result'

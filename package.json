@@ -12,8 +12,9 @@
     "dev:web": "pnpm --filter @espiao/web dev",
     "dev:server": "pnpm --filter @espiao/server dev",
     "lint": "eslint .",
-    "typecheck": "pnpm -r --if-present typecheck",
-    "test": "pnpm -r --if-present test",
+    "build:core": "pnpm --filter @espiao/game-core build",
+    "typecheck": "pnpm build:core && pnpm -r --if-present typecheck",
+    "test": "pnpm build:core && pnpm -r --if-present test",
     "build": "pnpm -r --if-present build",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
